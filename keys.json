@@ -1,11 +1,5 @@
 {
- "ELIX-7DAY":{
-  "expire":604800
- },
- "ELIX-30DAY":{
-  "expire":2592000
- },
- "ELIX-LIFETIME":{
-  "expire":999999999
- }
+ "ELIX-7DAY": 604800,
+ "ELIX-30DAY": 2592000,
+ "ELIX-LIFETIME": 0
 }
