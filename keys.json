@@ -1,16 +1,13 @@
 {
-  "ELIX-USER-001": {
-    "max": 5,
-    "hwids": []
-  },
+ "ELIX-USER-001": {
+  "hwid": null
+ },
 
-  "ELIX-USER-002": {
-    "max": 5,
-    "hwids": []
-  },
+ "ELIX-USER-002": {
+  "hwid": null
+ },
 
-  "ELIX-USER-003": {
-    "max": 5,
-    "hwids": []
-  }
+ "ELIX-USER-003": {
+  "hwid": null
+ }
 }
