@@ -1,11 +1,13 @@
--- ELIXSTORE LOADER OFFLINE PRO (WORKS)
+-- ELIXSTORE LOADER OFFLINE PRO SIMPLE
 
 local player = game.Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 local HWID = tostring(player.UserId)
 
--- Raw keys.json
+-- Link keys.json
 local KEYS_URL = "https://raw.githubusercontent.com/elixir60s/elixirstore/main/keys.json"
+
+-- Ambil keys.json
 local success, keyData = pcall(function()
     return HttpService:JSONDecode(game:HttpGet(KEYS_URL))
 end)
@@ -13,14 +15,15 @@ if not success then warn("Gagal fetch keys.json") return end
 
 -- GUI
 local gui = Instance.new("ScreenGui")
-gui.Parent = player.PlayerGui
+gui.Parent = player:WaitForChild("PlayerGui")
+
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 300, 0, 170)
-frame.Position = UDim2.new(.5, -150, .5, -85)
-frame.BackgroundColor3 = Color3.fromRGB(30, 0, 70)
+frame.Size = UDim2.new(0,300,0,170)
+frame.Position = UDim2.new(.5,-150,.5,-85)
+frame.BackgroundColor3 = Color3.fromRGB(30,0,70)
 frame.Active = true
 frame.Draggable = true
-Instance.new("UICorner", frame)
+Instance.new("UICorner",frame)
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,30)
@@ -64,7 +67,6 @@ local keyUsed = {}
 button.MouseButton1Click:Connect(function()
     local key = box.Text
     local data = keyData[key]
-
     if not data then
         status.Text = "Invalid Key"
         return
@@ -95,4 +97,3 @@ button.MouseButton1Click:Connect(function()
     gui:Destroy()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/elixir60s/elixirstore/refs/heads/main/script.lua"))()
 end)
-
