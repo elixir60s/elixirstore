@@ -1,17 +1,15 @@
--- ELIXSTORE LOADER FINAL
+-- ELIXSTORE LOADER FIX
 
 local player = game.Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 
 local KEY_URL = "https://raw.githubusercontent.com/elixir60s/elixirstore/main/keys.json"
 
-local HWID = player.UserId
-
 local keyData = HttpService:JSONDecode(game:HttpGet(KEY_URL))
 
 -- GUI
 local gui = Instance.new("ScreenGui")
-gui.Parent = player.PlayerGui
+gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame",gui)
 frame.Size = UDim2.new(0,300,0,160)
@@ -33,6 +31,7 @@ local box = Instance.new("TextBox",frame)
 box.Size = UDim2.new(.8,0,0,30)
 box.Position = UDim2.new(.1,0,.4,0)
 box.PlaceholderText = "Enter Key"
+box.Text = ""
 
 local btn = Instance.new("TextButton",frame)
 btn.Size = UDim2.new(.5,0,0,30)
@@ -48,16 +47,9 @@ status.TextColor3 = Color3.new(1,1,1)
 btn.MouseButton1Click:Connect(function()
 
  local key = box.Text
+ local duration = keyData[key]
 
- if keyData[key] then
-
-  local expire = keyData[key].expire
-  local now = os.time()
-
-  if expire and now > expire then
-   status.Text = "Key Expired"
-   return
-  end
+ if duration then
 
   status.Text = "Key Accepted"
 
@@ -74,4 +66,3 @@ btn.MouseButton1Click:Connect(function()
  end
 
 end)
-
