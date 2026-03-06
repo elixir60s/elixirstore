@@ -1,4 +1,4 @@
--- ELIXSTORE LOADER FIX
+-- ELIXSTORE LOADER FIX LIFETIME
 
 local player = game.Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
@@ -17,7 +17,6 @@ frame.Position = UDim2.new(.5,-150,.5,-80)
 frame.BackgroundColor3 = Color3.fromRGB(30,0,70)
 frame.Active = true
 frame.Draggable = true
-
 Instance.new("UICorner",frame)
 
 local title = Instance.new("TextLabel",frame)
@@ -26,6 +25,7 @@ title.BackgroundTransparency = 1
 title.Text = "ELIXSTORE KEY SYSTEM"
 title.Font = Enum.Font.GothamBold
 title.TextColor3 = Color3.new(1,1,1)
+title.Text = "ELIXSTORE KEY SYSTEM"
 
 local box = Instance.new("TextBox",frame)
 box.Size = UDim2.new(.8,0,0,30)
@@ -45,24 +45,21 @@ status.BackgroundTransparency = 1
 status.TextColor3 = Color3.new(1,1,1)
 
 btn.MouseButton1Click:Connect(function()
-
  local key = box.Text
  local duration = keyData[key]
 
  if duration then
-
-  status.Text = "Key Accepted"
-
-  wait(1)
-
-  gui:Destroy()
-
-  loadstring(game:HttpGet("https://raw.githubusercontent.com/elixir60s/elixirstore/main/script.lua"))()
-
+    -- Jika duration = 0 → lifetime
+    if duration > 0 then
+        local now = os.time()
+        -- disini bisa tambahkan logika start_time jika mau expire per user
+        -- untuk sementara kita anggap user baru mulai → expire masih berlaku
+    end
+    status.Text = "Key Accepted!"
+    wait(1)
+    gui:Destroy()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/elixir60s/elixirstore/refs/heads/main/script.lua"))()
  else
-
-  status.Text = "Invalid Key"
-
+    status.Text = "Invalid Key"
  end
-
 end)
