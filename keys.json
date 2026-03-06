@@ -1,5 +1,16 @@
 {
-  "ELIX-7DAY": {"duration":604800, "users":{}},
-  "ELIX-30DAY": {"duration":2592000, "users":{}},
-  "ELIX-LIFETIME": {"duration":0, "users":{}}
+  "ELIX-USER-001": {
+    "max": 5,
+    "hwids": []
+  },
+
+  "ELIX-USER-002": {
+    "max": 5,
+    "hwids": []
+  },
+
+  "ELIX-USER-003": {
+    "max": 5,
+    "hwids": []
+  }
 }
