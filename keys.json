@@ -1,0 +1,5 @@
+{
+  "ELIX-7DAY": {"expire":604800},
+  "ELIX-30DAY": {"expire":2592000},
+  "ELIX-LIFETIME": {"expire":null}
+}
