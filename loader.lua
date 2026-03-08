@@ -4,7 +4,7 @@ local player = game.Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 
 local KEYS_URL = "https://raw.githubusercontent.com/elixir60s/elixirstore/main/keys.json"
-local SCRIPT_URL = "https://raw.githubusercontent.com/elixir60s/elixirstore/refs/heads/main/elixirstore.lua"
+local SCRIPT_URL = "https://raw.githubusercontent.com/elixir60s/elixirstore/main/elixirstore.lua"
 
 local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
 
