@@ -1,4 +1,4 @@
--- ELIXIRSTORE AUTO MARSHMALLOW FINAL (FULL FIXED COMPLETE)
+-- ELIXIRSTORE AUTO MARSHMALLOW FINAL (FULL COMPLETE)
 
 local player = game.Players.LocalPlayer
 local vim = game:GetService("VirtualInputManager")
@@ -12,14 +12,14 @@ local playerGui = player:WaitForChild("PlayerGui")
 local running = false
 local autoSellEnabled = false
 
--- AUTO BUY
 local buyAmount = 1
 local buyRemote = game:GetService("ReplicatedStorage").RemoteEvents.StorePurchase
 
--- NPC
 local npcPos = CFrame.new(510.762817,3.58721066,600.791504)
+local tierPos = CFrame.new(1110.18726,4.28433371,117.139168)
 
 -- ANTI AFK
+
 player.Idled:Connect(function()
 VirtualUser:CaptureController()
 VirtualUser:ClickButton2(Vector2.new())
@@ -28,9 +28,11 @@ end)
 -- FUNCTIONS
 
 local function holdE(t)
+
 vim:SendKeyEvent(true,"E",false,game)
 task.wait(t)
 vim:SendKeyEvent(false,"E",false,game)
+
 end
 
 local function equip(name)
@@ -39,9 +41,12 @@ local char = player.Character or player.CharacterAdded:Wait()
 local tool = player.Backpack:FindFirstChild(name) or char:FindFirstChild(name)
 
 if tool then
+
 char.Humanoid:EquipTool(tool)
 task.wait(.3)
+
 return true
+
 end
 
 end
@@ -51,20 +56,32 @@ local function countItem(name)
 local total = 0
 
 for _,v in pairs(player.Backpack:GetChildren()) do
-if v.Name == name then total += 1 end
+
+if v.Name == name then
+
+total += 1
+
+end
+
 end
 
 for _,v in pairs(player.Character:GetChildren()) do
-if v:IsA("Tool") and v.Name == name then total += 1 end
+
+if v:IsA("Tool") and v.Name == name then
+
+total += 1
+
+end
+
 end
 
 return total
 
 end
 
--- TELEPORT VEHICLE
+-- VEHICLE TELEPORT (ANTI ROLLBACK)
 
-local function teleportVehicle()
+local function vehicleTeleport(cf)
 
 local char = player.Character
 if not char then return end
@@ -75,31 +92,68 @@ if not humanoid then return end
 local seat = humanoid.SeatPart
 
 if not seat then
-statusLabel.Text = "⚠ Sit on dirtbike"
+
+statusLabel.Text = "⚠ Sit on vehicle"
+
 return
+
 end
 
 local vehicle = seat:FindFirstAncestorOfClass("Model")
 
-if vehicle then
+if not vehicle then return end
 
 if not vehicle.PrimaryPart then
+
 vehicle.PrimaryPart = seat
+
 end
 
-statusLabel.Text = "🏍 Teleporting..."
+statusLabel.Text = "Sync vehicle..."
 
-vehicle:SetPrimaryPartCFrame(npcPos * CFrame.new(0,3,8))
-
-task.wait(2)
+-- gerak sedikit supaya server update posisi
 
 seat.Throttle = 1
-task.wait(0.7)
+task.wait(0.45)
 seat.Throttle = 0
+
+task.wait(0.3)
+
+statusLabel.Text = "Teleporting..."
+
+vehicle:SetPrimaryPartCFrame(cf * CFrame.new(0,6,15))
+
+task.wait(0.7)
+
+-- dorong lagi supaya server sinkron
+
+seat.Throttle = 1
+task.wait(0.8)
+seat.Throttle = 0
+
+end
+
+-- TELEPORT NPC
+
+local function teleportNPC()
+
+statusLabel.Text = "🏍 Teleport NPC..."
+
+vehicleTeleport(npcPos)
 
 statusLabel.Text = "✔ Arrived NPC"
 
 end
+
+-- TELEPORT TIER
+
+local function teleportTier()
+
+statusLabel.Text = "🚗 Teleport Tier..."
+
+vehicleTeleport(tierPos)
+
+statusLabel.Text = "✔ Arrived Tier"
 
 end
 
@@ -107,7 +161,7 @@ end
 
 local function autoBuy()
 
-statusLabel.Text = "Buying "..buyAmount.." Ingredients"
+statusLabel.Text = "Buying "..buyAmount
 
 for i = 1, buyAmount do
 
@@ -125,7 +179,7 @@ task.wait(.45)
 
 end
 
-statusLabel.Text = "Bought "..buyAmount.." Ingredients"
+statusLabel.Text = "Bought "..buyAmount
 
 end
 
@@ -134,9 +188,11 @@ end
 local function autoSell()
 
 local bags = {
+
 "Small Marshmallow Bag",
 "Medium Marshmallow Bag",
 "Large Marshmallow Bag"
+
 }
 
 for _,bag in pairs(bags) do
@@ -144,11 +200,17 @@ for _,bag in pairs(bags) do
 while countItem(bag) > 0 and autoSellEnabled do
 
 if equip(bag) then
+
 statusLabel.Text = "💰 Selling "..bag
+
 holdE(.7)
+
 task.wait(1)
+
 else
+
 break
+
 end
 
 end
@@ -337,69 +399,7 @@ local mediumLabel = createStatus("Medium Marshmallow: 0")
 local largeLabel = createStatus("Large Marshmallow: 0")
 local totalLabel = createStatus("Total: 0")
 
--- PROGRESS
-
-local function fill(bar,time)
-
-bar.Size = UDim2.new(0,0,1,0)
-
-bar:TweenSize(
-UDim2.new(1,0,1,0),
-Enum.EasingDirection.InOut,
-Enum.EasingStyle.Linear,
-time,
-true
-)
-
-task.delay(time,function()
-bar.Size = UDim2.new(0,0,1,0)
-end)
-
-end
-
--- BUTTONS
-
-local toggleBtn = Instance.new("TextButton",farmContainer)
-toggleBtn.Size = UDim2.new(1,0,0,22)
-toggleBtn.Text = "AUTO FARM"
-toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 12
-Instance.new("UICorner",toggleBtn)
-
-local sellBtn = Instance.new("TextButton",farmContainer)
-sellBtn.Size = UDim2.new(1,0,0,22)
-sellBtn.Text = "AUTO SELL : OFF"
-sellBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-sellBtn.TextColor3 = Color3.fromRGB(255,255,255)
-sellBtn.Font = Enum.Font.GothamBold
-sellBtn.TextSize = 12
-Instance.new("UICorner",sellBtn)
-
-local tpBtn = Instance.new("TextButton",farmContainer)
-tpBtn.Size = UDim2.new(1,0,0,22)
-tpBtn.Text = "TELEPORT NPC"
-tpBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-tpBtn.TextColor3 = Color3.fromRGB(255,255,255)
-tpBtn.Font = Enum.Font.GothamBold
-tpBtn.TextSize = 12
-Instance.new("UICorner",tpBtn)
-
-local buyBtn = Instance.new("TextButton",farmContainer)
-buyBtn.Size = UDim2.new(1,0,0,22)
-buyBtn.Text = "AUTO BUY"
-buyBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-buyBtn.TextColor3 = Color3.fromRGB(255,255,255)
-buyBtn.Font = Enum.Font.GothamBold
-buyBtn.TextSize = 12
-Instance.new("UICorner",buyBtn)
-
-buyBtn.MouseButton1Click:Connect(function()
-task.spawn(autoBuy)
-end)
-
--- BUY LABEL
+-- BUY SLIDER
 
 local buyLabel = Instance.new("TextLabel",farmContainer)
 buyLabel.Size = UDim2.new(1,0,0,18)
@@ -408,9 +408,6 @@ buyLabel.Text = "BUY AMOUNT : 1"
 buyLabel.Font = Enum.Font.Gotham
 buyLabel.TextSize = 11
 buyLabel.TextColor3 = Color3.fromRGB(210,210,210)
-buyLabel.TextXAlignment = Enum.TextXAlignment.Left
-
--- SLIDER
 
 local slider = Instance.new("Frame",farmContainer)
 slider.Size = UDim2.new(1,0,0,6)
@@ -456,8 +453,79 @@ dragging = false
 end
 end)
 
+-- PROGRESS FUNCTION
+
+local function fill(bar,time)
+
+bar.Size = UDim2.new(0,0,1,0)
+
+bar:TweenSize(
+UDim2.new(1,0,1,0),
+Enum.EasingDirection.InOut,
+Enum.EasingStyle.Linear,
+time,
+true
+)
+
+task.delay(time,function()
+bar.Size = UDim2.new(0,0,1,0)
+end)
+
+end
+
+-- BUTTONS
+
+local toggleBtn = Instance.new("TextButton",farmContainer)
+toggleBtn.Size = UDim2.new(1,0,0,22)
+toggleBtn.Text = "AUTO FARM"
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 12
+Instance.new("UICorner",toggleBtn)
+
+local sellBtn = Instance.new("TextButton",farmContainer)
+sellBtn.Size = UDim2.new(1,0,0,22)
+sellBtn.Text = "AUTO SELL : OFF"
+sellBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+sellBtn.TextColor3 = Color3.fromRGB(255,255,255)
+sellBtn.Font = Enum.Font.GothamBold
+sellBtn.TextSize = 12
+Instance.new("UICorner",sellBtn)
+
+local tpBtn = Instance.new("TextButton",farmContainer)
+tpBtn.Size = UDim2.new(1,0,0,22)
+tpBtn.Text = "TELEPORT NPC"
+tpBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+tpBtn.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner",tpBtn)
+
+local tierBtn = Instance.new("TextButton",farmContainer)
+tierBtn.Size = UDim2.new(1,0,0,22)
+tierBtn.Text = "TELEPORT TIER"
+tierBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+tierBtn.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner",tierBtn)
+
+local buyBtn = Instance.new("TextButton",farmContainer)
+buyBtn.Size = UDim2.new(1,0,0,22)
+buyBtn.Text = "AUTO BUY"
+buyBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+buyBtn.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner",buyBtn)
+
+-- BUTTON EVENTS
+
+buyBtn.MouseButton1Click:Connect(function()
+task.spawn(autoBuy)
+end)
+
 tpBtn.MouseButton1Click:Connect(function()
-teleportVehicle()
+teleportNPC()
+end)
+
+tierBtn.MouseButton1Click:Connect(function()
+teleportTier()
 end)
 
 sellBtn.MouseButton1Click:Connect(function()
