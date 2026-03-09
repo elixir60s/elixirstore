@@ -1,14 +1,22 @@
--- ELIXIRSTORE AUTO MARSHMALLOW FINAL (FULL WORKING)
+-- ELIXIRSTORE AUTO MARSHMALLOW FINAL (FULL FIXED COMPLETE)
 
 local player = game.Players.LocalPlayer
 local vim = game:GetService("VirtualInputManager")
 local ContextActionService = game:GetService("ContextActionService")
 local VirtualUser = game:GetService("VirtualUser")
+local UIS = game:GetService("UserInputService")
+
+repeat task.wait() until player.Character
+local playerGui = player:WaitForChild("PlayerGui")
 
 local running = false
 local autoSellEnabled = false
 
--- NPC POSITION
+-- AUTO BUY
+local buyAmount = 1
+local buyRemote = game:GetService("ReplicatedStorage").RemoteEvents.StorePurchase
+
+-- NPC
 local npcPos = CFrame.new(510.762817,3.58721066,600.791504)
 
 -- ANTI AFK
@@ -95,6 +103,32 @@ end
 
 end
 
+-- AUTO BUY
+
+local function autoBuy()
+
+statusLabel.Text = "Buying "..buyAmount.." Ingredients"
+
+for i = 1, buyAmount do
+
+buyRemote:FireServer("Water")
+task.wait(.35)
+
+buyRemote:FireServer("Sugar Block Bag")
+task.wait(.35)
+
+buyRemote:FireServer("Gelatin")
+task.wait(.35)
+
+buyRemote:FireServer("Empty Bag")
+task.wait(.45)
+
+end
+
+statusLabel.Text = "Bought "..buyAmount.." Ingredients"
+
+end
+
 -- AUTO SELL
 
 local function autoSell()
@@ -127,11 +161,12 @@ end
 
 -- GUI
 
-local gui = Instance.new("ScreenGui",player.PlayerGui)
+local gui = Instance.new("ScreenGui")
 gui.Name = "ELIXIRSTORE"
+gui.Parent = playerGui
 
 local frame = Instance.new("Frame",gui)
-frame.Size = UDim2.new(0,300,0,260)
+frame.Size = UDim2.new(0,310,0,360)
 frame.Position = UDim2.new(.5,0,.5,0)
 frame.AnchorPoint = Vector2.new(.5,.5)
 
@@ -156,16 +191,16 @@ title.Font = Enum.Font.GothamBlack
 title.TextSize = 16
 title.TextColor3 = Color3.fromRGB(230,200,255)
 
--- CLOSE BUTTON
+-- CLOSE
 
 local close = Instance.new("TextButton",frame)
 close.Position = UDim2.new(1,-22,0,2)
 close.Size = UDim2.new(0,20,0,20)
 close.Text = "X"
-close.Font = Enum.Font.GothamBold
-close.TextSize = 11
 close.BackgroundColor3 = Color3.fromRGB(120,0,0)
 close.TextColor3 = Color3.new(1,1,1)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 11
 
 Instance.new("UICorner",close)
 
@@ -243,7 +278,7 @@ statusLabel.TextSize = 12
 statusLabel.TextColor3 = Color3.fromRGB(220,220,220)
 statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 
--- ROW
+-- PROGRESS ROW
 
 local function createRow(text)
 
@@ -327,17 +362,99 @@ end
 local toggleBtn = Instance.new("TextButton",farmContainer)
 toggleBtn.Size = UDim2.new(1,0,0,22)
 toggleBtn.Text = "AUTO FARM"
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 12
 Instance.new("UICorner",toggleBtn)
 
 local sellBtn = Instance.new("TextButton",farmContainer)
 sellBtn.Size = UDim2.new(1,0,0,22)
 sellBtn.Text = "AUTO SELL : OFF"
+sellBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+sellBtn.TextColor3 = Color3.fromRGB(255,255,255)
+sellBtn.Font = Enum.Font.GothamBold
+sellBtn.TextSize = 12
 Instance.new("UICorner",sellBtn)
 
 local tpBtn = Instance.new("TextButton",farmContainer)
 tpBtn.Size = UDim2.new(1,0,0,22)
 tpBtn.Text = "TELEPORT NPC"
+tpBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+tpBtn.TextColor3 = Color3.fromRGB(255,255,255)
+tpBtn.Font = Enum.Font.GothamBold
+tpBtn.TextSize = 12
 Instance.new("UICorner",tpBtn)
+
+local buyBtn = Instance.new("TextButton",farmContainer)
+buyBtn.Size = UDim2.new(1,0,0,22)
+buyBtn.Text = "AUTO BUY"
+buyBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+buyBtn.TextColor3 = Color3.fromRGB(255,255,255)
+buyBtn.Font = Enum.Font.GothamBold
+buyBtn.TextSize = 12
+Instance.new("UICorner",buyBtn)
+
+buyBtn.MouseButton1Click:Connect(function()
+task.spawn(autoBuy)
+end)
+
+-- BUY LABEL
+
+local buyLabel = Instance.new("TextLabel",farmContainer)
+buyLabel.Size = UDim2.new(1,0,0,18)
+buyLabel.BackgroundTransparency = 1
+buyLabel.Text = "BUY AMOUNT : 1"
+buyLabel.Font = Enum.Font.Gotham
+buyLabel.TextSize = 11
+buyLabel.TextColor3 = Color3.fromRGB(210,210,210)
+buyLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- SLIDER
+
+local slider = Instance.new("Frame",farmContainer)
+slider.Size = UDim2.new(1,0,0,6)
+slider.BackgroundColor3 = Color3.fromRGB(45,45,45)
+Instance.new("UICorner",slider)
+
+local knob = Instance.new("Frame",slider)
+knob.Size = UDim2.new(0,12,0,12)
+knob.Position = UDim2.new(0,-6,0.5,-6)
+knob.BackgroundColor3 = Color3.fromRGB(180,0,255)
+Instance.new("UICorner",knob)
+
+local dragging = false
+
+local function updateSlider(x)
+
+local pos = math.clamp((x-slider.AbsolutePosition.X)/slider.AbsoluteSize.X,0,1)
+
+knob.Position = UDim2.new(pos,-6,0.5,-6)
+
+buyAmount = math.floor(1 + pos * 24)
+
+buyLabel.Text = "BUY AMOUNT : "..buyAmount
+
+end
+
+slider.InputBegan:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseButton1 then
+dragging = true
+updateSlider(input.Position.X)
+end
+end)
+
+UIS.InputChanged:Connect(function(input)
+if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+updateSlider(input.Position.X)
+end
+end)
+
+UIS.InputEnded:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseButton1 then
+dragging = false
+end
+end)
 
 tpBtn.MouseButton1Click:Connect(function()
 teleportVehicle()
