@@ -14,6 +14,10 @@ local running = false
 local autoSellEnabled = false
 local buyAmount = 1
 
+local autoFarmRunning = false
+local autoFarmStopping = false
+local cookAmount = 5
+
 local buyRemote = game:GetService("ReplicatedStorage").RemoteEvents.StorePurchase
 
 local npcPos = CFrame.new(510.762817,3.58721066,600.791504)
@@ -594,9 +598,462 @@ end
 -- CREATE PAGES
 
 local farmPage = createTab("FARM",20)
-local statusPage = createTab("STATUS",70)
-local teleportPage = createTab("TELEPORT",120)
-local espPage = createTab("ESP",170)
+local autoFarmPage = createTab("AUTO FARM",70)
+local statusPage = createTab("STATUS",120)
+local teleportPage = createTab("TELEPORT",170)
+local espPage = createTab("ESP",220)
+
+-- UI AUTO FARM
+local toggle = Instance.new("TextButton")
+toggle.Parent = autoFarmPage
+toggle.Size = UDim2.new(1,0,0,45)
+toggle.BackgroundColor3 = Color3.fromRGB(60,30,100)
+toggle.Text = ""
+
+Instance.new("UICorner",toggle)
+
+local check = Instance.new("TextLabel")
+check.Parent = toggle
+check.Size = UDim2.new(0,36,0,36)
+check.Position = UDim2.new(0,6,0.5,-18)
+check.BackgroundColor3 = Color3.fromRGB(35,25,60)
+check.Text = ""
+check.Font = Enum.Font.GothamBold
+check.TextSize = 20
+check.TextColor3 = Color3.new(1,1,1)
+
+Instance.new("UICorner",check)
+
+-- SLIDER LABEL
+local cookLabel = Instance.new("TextLabel", autoFarmPage)
+cookLabel.Size = UDim2.new(1,0,0,20)
+cookLabel.BackgroundTransparency = 1
+cookLabel.Text = "COOK AMOUNT : "..cookAmount
+cookLabel.Font = Enum.Font.Gotham
+cookLabel.TextSize = 14
+cookLabel.TextColor3 = Color3.fromRGB(210,210,210)
+
+-- SLIDER BAR
+local cookSlider = Instance.new("Frame", autoFarmPage)
+cookSlider.Size = UDim2.new(1,0,0,8)
+cookSlider.BackgroundColor3 = Color3.fromRGB(45,45,45)
+
+Instance.new("UICorner",cookSlider)
+
+-- KNOB
+local cookKnob = Instance.new("Frame", cookSlider)
+cookKnob.Size = UDim2.new(0,14,0,14)
+cookKnob.Position = UDim2.new(0,-7,0.5,-7)
+cookKnob.BackgroundColor3 = Color3.fromRGB(170,90,255)
+
+Instance.new("UICorner",cookKnob)
+
+local draggingCook = false
+
+local function updateCookSlider(x)
+    local pos = math.clamp((x - cookSlider.AbsolutePosition.X) / cookSlider.AbsoluteSize.X, 0, 1)
+
+    cookKnob.Position = UDim2.new(pos,-7,0.5,-7)
+
+    cookAmount = math.floor(1 + pos * 50) -- range 1-10
+
+    cookLabel.Text = "COOK AMOUNT : "..cookAmount
+end
+
+cookSlider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingCook = true
+        updateCookSlider(input.Position.X)
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if draggingCook and input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateCookSlider(input.Position.X)
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingCook = false
+    end
+end)
+
+local draggingCook = false
+
+local function updateCookSlider(x)
+    local pos = math.clamp((x - cookSlider.AbsolutePosition.X) / cookSlider.AbsoluteSize.X, 0, 1)
+
+    cookKnob.Position = UDim2.new(pos,-7,0.5,-7)
+
+    cookAmount = math.max(1, math.floor(1 + pos * 49)) -- 🔥 FIX DI SINI
+
+    cookLabel.Text = "COOK AMOUNT : "..cookAmount
+end
+
+cookSlider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingCook = true
+        updateCookSlider(input.Position.X)
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if draggingCook and input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateCookSlider(input.Position.X)
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingCook = false
+    end
+end)
+
+local player = game.Players.LocalPlayer
+local vim = game:GetService("VirtualInputManager")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UIS = game:GetService("UserInputService")
+
+-- 🔥 FIX CHARACTER (ANTI BENTROK)
+local function getChar()
+    return player.Character or player.CharacterAdded:Wait()
+end
+
+local function getHumanoid()
+    return getChar():WaitForChild("Humanoid")
+end
+
+local function getHRP()
+    local char = getChar()
+    return char:FindFirstChild("HumanoidRootPart")
+end
+
+local buyRemote = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("StorePurchase")
+
+local autoFarmRunning = false
+local autoFarmStopping = false
+
+local storePos = Vector3.new(510.7584,3.5872,600.3163)
+
+--------------------------------------------------
+-- LOADING UI
+--------------------------------------------------
+
+local loadingGui = Instance.new("ScreenGui", player.PlayerGui)
+loadingGui.IgnoreGuiInset = true
+loadingGui.ResetOnSpawn = false
+
+local bg = Instance.new("Frame", loadingGui)
+bg.Size = UDim2.new(1,0,1,0)
+bg.BackgroundColor3 = Color3.new(0,0,0)
+bg.Visible = false
+
+local text = Instance.new("TextLabel", bg)
+text.Size = UDim2.new(1,0,0,70)
+text.Position = UDim2.new(0,0,0.5,-35)
+text.BackgroundTransparency = 1
+text.Text = "ELIXIR STORE"
+text.TextScaled = true
+text.Font = Enum.Font.GothamBlack
+text.TextColor3 = Color3.fromRGB(255,255,255)
+
+local stroke = Instance.new("UIStroke", text)
+stroke.Thickness = 3
+stroke.Color = Color3.fromRGB(200,120,255)
+
+local function showLoading()
+    bg.Visible = true
+end
+
+local function hideLoading()
+    bg.Visible = false
+end
+
+--------------------------------------------------
+-- FREEZE VEHICLE
+--------------------------------------------------
+
+local function freezeVehicle(vehicle)
+    if not vehicle or not vehicle.PrimaryPart then return end
+
+    local part = vehicle.PrimaryPart
+
+    part.AssemblyLinearVelocity = Vector3.zero
+    part.AssemblyAngularVelocity = Vector3.zero
+
+    part.Velocity = Vector3.zero
+    part.RotVelocity = Vector3.zero
+end
+
+--------------------------------------------------
+-- PRESS E
+--------------------------------------------------
+
+local function pressE()
+    vim:SendKeyEvent(true,"E",false,game)
+    task.wait(.6)
+    vim:SendKeyEvent(false,"E",false,game)
+end
+
+--------------------------------------------------
+-- EQUIP
+--------------------------------------------------
+
+local function equipV2(name)
+    if autoFarmStopping then return end
+    local char = getChar()
+    local tool = player.Backpack:FindFirstChild(name) or char:FindFirstChild(name)
+    if tool then
+        getHumanoid():EquipTool(tool)
+        task.wait(.25)
+        return true
+    end
+end
+
+--------------------------------------------------
+-- COUNT ITEM
+--------------------------------------------------
+
+local function countItemV2(name)
+    local total = 0
+    for _,v in pairs(player.Backpack:GetChildren()) do
+        if v.Name == name then total += 1 end
+    end
+    for _,v in pairs(getChar():GetChildren()) do
+        if v:IsA("Tool") and v.Name == name then total += 1 end
+    end
+    return total
+end
+
+--------------------------------------------------
+-- AUTO BUY
+--------------------------------------------------
+
+local function autoBuyV2()
+    for i = 1, cookAmount do
+        if not autoFarmRunning or autoFarmStopping then break end
+
+        buyRemote:FireServer("Water")
+        task.wait(0.35)
+
+        buyRemote:FireServer("Sugar Block Bag")
+        task.wait(0.35)
+
+        buyRemote:FireServer("Gelatin")
+        task.wait(0.35)
+
+        buyRemote:FireServer("Empty Bag")
+        task.wait(0.35)
+    end
+end
+
+--------------------------------------------------
+-- FIND STOVE (TIDAK DIUBAH)
+--------------------------------------------------
+
+local function findStove()
+    local hrp = getHRP()
+    if not hrp then return end
+
+    local nearest
+    local dist = math.huge
+
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") and string.find(v.Name:lower(),"stove") then
+            local d = (v.Position - hrp.Position).Magnitude
+            if d < dist then
+                dist = d
+                nearest = v
+            end
+        end
+    end
+
+    return nearest
+end
+
+--------------------------------------------------
+-- MOVE TO STOVE (TIDAK DIUBAH)
+--------------------------------------------------
+
+local function moveToStove(stove)
+    if not stove or autoFarmStopping then return end
+
+    local hrp = getHRP()
+    if not hrp then return end
+
+    local seat = getHumanoid().SeatPart
+    if not seat then return end
+
+    local vehicle = seat:FindFirstAncestorOfClass("Model")
+    if not vehicle or not vehicle.PrimaryPart then return end
+
+    local dir = (stove.Position - hrp.Position).Unit
+    local targetPos = stove.Position - (dir * 3.5) + Vector3.new(0,1.5,0)
+
+    local _, y, _ = vehicle.PrimaryPart.CFrame:ToOrientation()
+    local fixedCF = CFrame.new(targetPos) * CFrame.Angles(0, y, 0)
+
+    vehicle:SetPrimaryPartCFrame(fixedCF)
+    freezeVehicle(vehicle)
+
+    task.wait(0.4)
+end
+
+--------------------------------------------------
+-- COOK (FLOW ASLI)
+--------------------------------------------------
+
+local function cookV2()
+    if not autoFarmRunning or autoFarmStopping then return end
+
+    local stove = findStove()
+    moveToStove(stove)
+
+    for i = 1, cookAmount do
+        if autoFarmStopping then return end
+
+        if autoFarmRunning and equipV2("Water") then
+            pressE()
+            task.wait(20)
+        end
+
+        if autoFarmRunning and equipV2("Sugar Block Bag") then
+            pressE()
+            task.wait(1.5)
+        end
+
+        if autoFarmRunning and equipV2("Gelatin") then
+            pressE()
+            task.wait(1.5)
+        end
+
+        task.wait(45)
+
+        if autoFarmRunning and equipV2("Empty Bag") then
+            pressE()
+            task.wait(1.5)
+        end
+    end
+end
+
+--------------------------------------------------
+-- AUTO SELL
+--------------------------------------------------
+
+local function autoSellV2()
+    local bags = {
+        "Small Marshmallow Bag",
+        "Medium Marshmallow Bag",
+        "Large Marshmallow Bag"
+    }
+
+    for _,bag in pairs(bags) do
+        while autoFarmRunning and not autoFarmStopping and countItemV2(bag) > 0 do
+            if equipV2(bag) then
+                pressE()
+                task.wait(0.8)
+            else
+                break
+            end
+        end
+    end
+end
+
+--------------------------------------------------
+-- VEHICLE TP
+--------------------------------------------------
+
+local function vehicleTP(target)
+    if autoFarmStopping then return end
+
+    showLoading()
+
+    local seat = getHumanoid().SeatPart
+    if not seat then
+        hideLoading()
+        return
+    end
+
+    local vehicle = seat:FindFirstAncestorOfClass("Model")
+    if not vehicle then
+        hideLoading()
+        return
+    end
+
+    if not vehicle.PrimaryPart then
+        vehicle.PrimaryPart = seat
+    end
+
+    local rot = vehicle.PrimaryPart.CFrame - vehicle.PrimaryPart.Position
+    local safe = target + Vector3.new(0,2,0)
+
+    vehicle:SetPrimaryPartCFrame(CFrame.new(safe) * rot)
+    freezeVehicle(vehicle)
+
+    task.wait(0.25)
+
+    vehicle:SetPrimaryPartCFrame(CFrame.new(target) * rot)
+    freezeVehicle(vehicle)
+
+    task.wait(0.4)
+
+    hideLoading()
+end
+
+--------------------------------------------------
+-- FARM LOOP (FLOW ASLI)
+--------------------------------------------------
+
+local function farmLoop()
+    local hrp = getHRP()
+    if not hrp then return end
+
+    local apartPos = hrp.Position
+
+    while autoFarmRunning and not autoFarmStopping do
+        vehicleTP(storePos)
+        task.wait(0.5)
+
+        autoBuyV2()
+        task.wait(1)
+
+        vehicleTP(apartPos)
+        task.wait(1.2)
+
+        cookV2()
+
+        vehicleTP(storePos)
+        task.wait(0.5)
+
+        autoSellV2()
+
+        task.wait(0.5)
+    end
+end
+
+--------------------------------------------------
+-- TOGGLE
+--------------------------------------------------
+
+toggle.MouseButton1Click:Connect(function()
+    autoFarmRunning = not autoFarmRunning
+
+    if autoFarmRunning then
+        check.Text = "✓"
+check.BackgroundColor3 = Color3.fromRGB(170,90,255)
+        check.TextColor3 = Color3.fromRGB(170,100,255)
+
+        autoFarmStopping = false
+        task.spawn(farmLoop)
+    else
+        check.Text = ""
+check.BackgroundColor3 = Color3.fromRGB(35,25,60)
+        check.TextColor3 = Color3.fromRGB(200,150,255)
+
+        autoFarmStopping = true
+    end
+end)
 
 local MaxDistance = 500
 
@@ -927,16 +1384,21 @@ Instance.new("UICorner",buyBtn)
 
 toggleBtn.MouseButton1Click:Connect(function()
 
-running = not running
+    -- MATIIN AUTO FARM BARU
+    autoFarmRunning = false
+    autoFarmStopping = true
 
-if running then
-statusLabel.Text = "Status : RUNNING"
-toggleBtn.Text = "STOP"
-task.spawn(cook)
-else
-statusLabel.Text = "Status : STOPPED"
-toggleBtn.Text = "AUTO FARM"
-end
+    running = not running
+
+    if running then
+        toggleBtn.Text = "STOP FARM"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(170,90,255)
+
+        task.spawn(cook)
+    else
+        toggleBtn.Text = "START FARM"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
+    end
 
 end)
 
