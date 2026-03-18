@@ -790,9 +790,11 @@ end
 -- PRESS E
 --------------------------------------------------
 
-local function pressE()
+local function pressE(duration)
+    duration = duration or 0.8
+
     vim:SendKeyEvent(true,"E",false,game)
-    task.wait(.6)
+    task.wait(duration)
     vim:SendKeyEvent(false,"E",false,game)
 end
 
@@ -918,16 +920,19 @@ local function cookV2()
             task.wait(20)
         end
 
-        if autoFarmRunning and equipV2("Sugar Block Bag") then
-            pressE()
-            task.wait(1.5)
-        end
+        -- SUGAR
+if autoFarmRunning and equipV2("Sugar Block Bag") then
+    task.wait(0.25)       -- kasih waktu equip
+    pressE(1)             -- hold lebih lama
+    task.wait(1.3)        -- tunggu proses
+end
 
-        if autoFarmRunning and equipV2("Gelatin") then
-            pressE()
-            task.wait(1.5)
-        end
-
+-- GELATIN
+if autoFarmRunning and equipV2("Gelatin") then
+    task.wait(0.25)
+    pressE(1)
+    task.wait(1.3)
+end
         task.wait(45)
 
         if autoFarmRunning and equipV2("Empty Bag") then
