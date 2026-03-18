@@ -733,6 +733,7 @@ local buyRemote = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("S
 
 local autoFarmRunning = false
 local autoFarmStopping = false
+local farmID = 0
 
 local storePos = Vector3.new(510.7584,3.5872,600.3163)
 
@@ -1010,13 +1011,13 @@ end
 -- FARM LOOP (FLOW ASLI)
 --------------------------------------------------
 
-local function farmLoop()
+local function farmLoop(id)
     local hrp = getHRP()
     if not hrp then return end
 
     local apartPos = hrp.Position
 
-    while autoFarmRunning and not autoFarmStopping do
+    while id == farmID and autoFarmRunning and not autoFarmStopping do
         vehicleTP(storePos)
         task.wait(0.5)
 
@@ -1042,22 +1043,30 @@ end
 --------------------------------------------------
 
 toggle.MouseButton1Click:Connect(function()
+
     autoFarmRunning = not autoFarmRunning
 
     if autoFarmRunning then
-        check.Text = "✓"
-check.BackgroundColor3 = Color3.fromRGB(170,90,255)
-        check.TextColor3 = Color3.fromRGB(170,100,255)
+        farmID += 1
+        local currentID = farmID
 
         autoFarmStopping = false
-        task.spawn(farmLoop)
-    else
-        check.Text = ""
-check.BackgroundColor3 = Color3.fromRGB(35,25,60)
-        check.TextColor3 = Color3.fromRGB(200,150,255)
 
+        check.Text = "✓"
+        check.BackgroundColor3 = Color3.fromRGB(170,90,255)
+
+        task.spawn(function()
+            farmLoop(currentID)
+        end)
+
+    else
+        autoFarmRunning = false
         autoFarmStopping = true
+
+        check.Text = ""
+        check.BackgroundColor3 = Color3.fromRGB(35,25,60)
     end
+
 end)
 
 local MaxDistance = 500
