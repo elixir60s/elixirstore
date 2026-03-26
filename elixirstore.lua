@@ -1,10 +1,11 @@
--- ELIXIR 3.1 FINAL + ANTI HIT TP
+-- ELIXIR 3.1 FINAL + ANTI HIT TP + ANTI APPROACH + RESPAWN TAB
 local Players = game:GetService("Players")
 local player = game.Players.LocalPlayer
 local vim = game:GetService("VirtualInputManager")
 local ContextActionService = game:GetService("ContextActionService")
 local VirtualUser = game:GetService("VirtualUser")
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 repeat task.wait() until player.Character
 
@@ -331,17 +332,17 @@ end
 
 -- CREATE PAGES
 
-local farmPage = createTab("FARM",20)
+local farmPage     = createTab("FARM",20)
 local autoFarmPage = createTab("AUTO FARM",70)
-local statusPage = createTab("STATUS",120)
+local statusPage   = createTab("STATUS",120)
 local teleportPage = createTab("TELEPORT",170)
-local espPage = createTab("ESP",220)
+local espPage      = createTab("ESP",220)
+local respawnPage  = createTab("RESPAWN",270)
 
 -- ============================================================
 -- AUTO FARM PAGE UI
 -- ============================================================
 
--- TOGGLE BUTTON (CHECKMARK)
 local toggle = Instance.new("TextButton")
 toggle.Parent = autoFarmPage
 toggle.Size = UDim2.new(1,0,0,45)
@@ -360,7 +361,6 @@ check.TextSize = 20
 check.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner",check)
 
--- COOK AMOUNT LABEL
 local cookLabel = Instance.new("TextLabel", autoFarmPage)
 cookLabel.Size = UDim2.new(1,0,0,20)
 cookLabel.BackgroundTransparency = 1
@@ -369,7 +369,6 @@ cookLabel.Font = Enum.Font.Gotham
 cookLabel.TextSize = 14
 cookLabel.TextColor3 = Color3.fromRGB(210,210,210)
 
--- COOK SLIDER
 local cookSlider = Instance.new("Frame", autoFarmPage)
 cookSlider.Size = UDim2.new(1,0,0,8)
 cookSlider.BackgroundColor3 = Color3.fromRGB(45,45,45)
@@ -410,22 +409,98 @@ UIS.InputEnded:Connect(function(input)
 end)
 
 -- ============================================================
--- ANTI HIT TP (di dalam AUTO FARM tab)
+-- ANTI HIT TP + ANTI APPROACH (2-IN-1)
 -- ============================================================
 
-local SAFE_POS = Vector3.new(579.0, 3.5, -539.7)
-local antiHitConn = nil
-getgenv().ANTI_HIT = false
+local SAFE_POS        = Vector3.new(579.0, 3.5, -539.7)
+local MALL_POS        = Vector3.new(-725.4, 4.8, 587.4)
+local APPROACH_RADIUS = 20
+local antiHitConn     = nil
+local antiApprConn    = nil
+getgenv().ANTI_HIT    = false
 
--- ANTI HIT BUTTON
 local antiHitBtn = Instance.new("TextButton", autoFarmPage)
 antiHitBtn.Size = UDim2.new(1,0,0,32)
-antiHitBtn.Text = "ANTI HIT TP : OFF"
+antiHitBtn.Text = "🛡️ ANTI HIT + APPROACH : OFF"
 antiHitBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
 antiHitBtn.TextColor3 = Color3.new(1,1,1)
 antiHitBtn.Font = Enum.Font.GothamBold
 antiHitBtn.TextSize = 14
 Instance.new("UICorner", antiHitBtn)
+
+local antiHitStatus = Instance.new("TextLabel", autoFarmPage)
+antiHitStatus.Size = UDim2.new(1,0,0,20)
+antiHitStatus.BackgroundTransparency = 1
+antiHitStatus.Text = "Status: idle"
+antiHitStatus.Font = Enum.Font.Gotham
+antiHitStatus.TextSize = 13
+antiHitStatus.TextColor3 = Color3.fromRGB(180,180,180)
+
+local function startAntiHit()
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+	antiHitConn = hum.HealthChanged:Connect(function(newHealth)
+		if not getgenv().ANTI_HIT then return end
+		if newHealth < hum.MaxHealth and newHealth > 0 then
+			antiHitStatus.Text = "⚡ Kena hit! TP..."
+			vehicleTeleport(CFrame.new(SAFE_POS))
+		end
+	end)
+end
+
+local function startAntiApproach()
+	antiApprConn = RunService.Heartbeat:Connect(function()
+		if not getgenv().ANTI_HIT then return end
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		for _, plr in pairs(Players:GetPlayers()) do
+			if plr == player then continue end
+			local c = plr.Character
+			local h = c and c:FindFirstChild("HumanoidRootPart")
+			if h then
+				local dist = (hrp.Position - h.Position).Magnitude
+				if dist <= APPROACH_RADIUS then
+					antiHitStatus.Text = "⚠️ " .. plr.Name .. " mendekat! TP mall..."
+					vehicleTeleport(CFrame.new(MALL_POS))
+					task.wait(1)
+					return
+				end
+			end
+		end
+		antiHitStatus.Text = "🛡️ Aktif | Radius: " .. APPROACH_RADIUS
+	end)
+end
+
+local function stopAntiHit()
+	if antiHitConn  then antiHitConn:Disconnect()  antiHitConn  = nil end
+	if antiApprConn then antiApprConn:Disconnect() antiApprConn = nil end
+	antiHitStatus.Text = "Status: idle"
+end
+
+player.CharacterAdded:Connect(function()
+	if getgenv().ANTI_HIT then
+		task.wait(1)
+		startAntiHit()
+		startAntiApproach()
+	end
+end)
+
+antiHitBtn.MouseButton1Click:Connect(function()
+	getgenv().ANTI_HIT = not getgenv().ANTI_HIT
+	if getgenv().ANTI_HIT then
+		startAntiHit()
+		startAntiApproach()
+		antiHitBtn.Text = "🛡️ ANTI HIT + APPROACH : ON"
+		antiHitBtn.BackgroundColor3 = Color3.fromRGB(170,90,255)
+		antiHitStatus.Text = "🛡️ Aktif | Radius: " .. APPROACH_RADIUS
+	else
+		stopAntiHit()
+		antiHitBtn.Text = "🛡️ ANTI HIT + APPROACH : OFF"
+		antiHitBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
+	end
+end)
 
 -- ============================================================
 -- AUTO FARM LOGIC
@@ -605,52 +680,6 @@ local function vehicleTP(target)
 	task.wait(0.4)
 	hideLoading()
 end
-
--- ============================================================
--- ANTI HIT TP FUNCTIONS (pakai vehicleTP)
--- ============================================================
-
-local function startAntiHit()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hum then return end
-
-    antiHitConn = hum.HealthChanged:Connect(function(newHealth)
-        if not getgenv().ANTI_HIT then return end
-        if newHealth < hum.MaxHealth and newHealth > 0 then
-            vehicleTeleport(CFrame.new(SAFE_POS))  -- pakai yang ini
-        end
-    end)
-end
-
-local function stopAntiHit()
-	if antiHitConn then
-		antiHitConn:Disconnect()
-		antiHitConn = nil
-	end
-end
-
-player.CharacterAdded:Connect(function()
-	if getgenv().ANTI_HIT then
-		task.wait(1)
-		startAntiHit()
-	end
-end)
-
--- ANTI HIT BUTTON EVENT
-
-antiHitBtn.MouseButton1Click:Connect(function()
-    getgenv().ANTI_HIT = not getgenv().ANTI_HIT
-    if getgenv().ANTI_HIT then
-        startAntiHit()
-        antiHitBtn.Text = "ANTI HIT TP : ON"
-        antiHitBtn.BackgroundColor3 = Color3.fromRGB(170,90,255) -- ungu terang saat ON
-    else
-        stopAntiHit()
-        antiHitBtn.Text = "ANTI HIT TP : OFF"
-        antiHitBtn.BackgroundColor3 = Color3.fromRGB(55,35,85) -- ungu gelap saat OFF
-    end
-end)
 
 -- ============================================================
 -- COOK V2
@@ -1151,6 +1180,93 @@ addTeleportButton("CSN 3", function() vehicleTeleport(csn3) end)
 addTeleportButton("CSN 4", function() vehicleTeleport(csn4) end)
 
 -- ============================================================
+-- RESPAWN PAGE
+-- ============================================================
+
+local selectedSpawn = nil
+
+local respawnStatus = Instance.new("TextLabel", respawnPage)
+respawnStatus.Size = UDim2.new(1,0,0,24)
+respawnStatus.BackgroundTransparency = 1
+respawnStatus.Text = "📍 Spawn: belum dipilih"
+respawnStatus.Font = Enum.Font.GothamSemibold
+respawnStatus.TextSize = 14
+respawnStatus.TextColor3 = Color3.fromRGB(220,220,220)
+respawnStatus.TextXAlignment = Enum.TextXAlignment.Left
+
+local function makeSpawnBtn(name, pos)
+	local b = Instance.new("TextButton", respawnPage)
+	b.Size = UDim2.new(1,0,0,32)
+	b.Text = "📍 "..name
+	b.BackgroundColor3 = Color3.fromRGB(55,35,85)
+	b.TextColor3 = Color3.new(1,1,1)
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 14
+	Instance.new("UICorner", b)
+	b.MouseButton1Click:Connect(function()
+		selectedSpawn = pos
+		for _,v in pairs(respawnPage:GetChildren()) do
+			if v:IsA("TextButton") then
+				v.BackgroundColor3 = Color3.fromRGB(55,35,85)
+			end
+		end
+		b.BackgroundColor3 = Color3.fromRGB(40,170,90)
+		respawnStatus.Text = "📍 Spawn: "..name
+	end)
+end
+
+makeSpawnBtn("🚀 Dealer",     Vector3.new(511,3,601))
+makeSpawnBtn("🏥 RS 1",       Vector3.new(1140.8,10.1,451.8))
+makeSpawnBtn("🏥 RS 2",       Vector3.new(1141.2,10.1,423.2))
+makeSpawnBtn("🏠 Tier 1",     Vector3.new(985.9,10.1,247))
+makeSpawnBtn("🏠 Tier 2",     Vector3.new(989.3,11.0,228.3))
+makeSpawnBtn("🗑️ Trash 1",    Vector3.new(890.9,10.1,44.3))
+makeSpawnBtn("🗑️ Trash 2",    Vector3.new(920.4,10.1,46.3))
+makeSpawnBtn("🚗 Dealership", Vector3.new(733.5,4.6,431.9))
+makeSpawnBtn("🔫 GS Ujung",   Vector3.new(-467.1,4.8,353.5))
+makeSpawnBtn("🔫 GS Mid",     Vector3.new(218.7,3.7,-176.2))
+
+local respawnNowBtn = Instance.new("TextButton", respawnPage)
+respawnNowBtn.Size = UDim2.new(1,0,0,36)
+respawnNowBtn.Text = "🔄 RESPAWN SEKARANG"
+respawnNowBtn.BackgroundColor3 = Color3.fromRGB(170,90,255)
+respawnNowBtn.TextColor3 = Color3.new(1,1,1)
+respawnNowBtn.Font = Enum.Font.GothamBold
+respawnNowBtn.TextSize = 15
+Instance.new("UICorner", respawnNowBtn)
+
+respawnNowBtn.MouseButton1Click:Connect(function()
+	if not selectedSpawn then
+		respawnStatus.Text = "⚠️ Pilih spawn dulu!"
+		return
+	end
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+	respawnStatus.Text = "💀 Respawning..."
+	local StarterGui = game:GetService("StarterGui")
+	-- MATIIN COREGUI DULU, TUNGGU BENTAR BARU MATI
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
+	loadText.Text = "RESPAWNING..."
+	showLoading()
+	task.wait(0.3) -- kasih waktu CoreGui buat keapply
+	hum.Health = 0
+	task.wait(0.2)
+	player.CharacterAdded:Wait()
+	task.wait(1)
+	local newChar = player.Character
+	local hrp = newChar and newChar:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		hrp.CFrame = CFrame.new(selectedSpawn)
+		task.wait(0.3)
+	end
+	hideLoading()
+	loadText.Text = "ELIXIR STORE"
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true)
+	respawnStatus.Text = "✅ Respawn berhasil!"
+end)
+
+-- ============================================================
 -- MOBILE HIDE BUTTON
 -- ============================================================
 
@@ -1187,7 +1303,6 @@ ContextActionService:BindAction(
 
 repeat task.wait() until game.Players.LocalPlayer.Character
 
-local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
