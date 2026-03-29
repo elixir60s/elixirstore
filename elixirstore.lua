@@ -1,4 +1,4 @@
--- ELIXIR 3.1 FINAL + ANTI HIT TP + ANTI APPROACH + RESPAWN TAB
+-- ELIXIR 3.5 -- NEW GUI: MODERN DARK PURPLE + ICON SIDEBAR + NOTIF POPUP
 local Players = game:GetService("Players")
 local player = game.Players.LocalPlayer
 local vim = game:GetService("VirtualInputManager")
@@ -6,6 +6,7 @@ local ContextActionService = game:GetService("ContextActionService")
 local VirtualUser = game:GetService("VirtualUser")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 repeat task.wait() until player.Character
 
@@ -24,22 +25,22 @@ local buyRemote = game:GetService("ReplicatedStorage").RemoteEvents.StorePurchas
 local npcPos = CFrame.new(510.762817,3.58721066,600.791504)
 local tierPos = CFrame.new(1110.18726,4.28433371,117.139168)
 
+-- ============================================================
 -- ANTI AFK
-
+-- ============================================================
 player.Idled:Connect(function()
 	VirtualUser:CaptureController()
 	VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- HOLD E
-
+-- ============================================================
+-- HELPERS
+-- ============================================================
 local function holdE(t)
 	vim:SendKeyEvent(true,"E",false,game)
 	task.wait(t)
 	vim:SendKeyEvent(false,"E",false,game)
 end
-
--- EQUIP
 
 local function equip(name)
 	local char = player.Character
@@ -51,24 +52,16 @@ local function equip(name)
 	end
 end
 
--- COUNT ITEM
-
 local function countItem(name)
 	local total = 0
 	for _,v in pairs(player.Backpack:GetChildren()) do
-		if v.Name == name then
-			total += 1
-		end
+		if v.Name == name then total += 1 end
 	end
 	for _,v in pairs(player.Character:GetChildren()) do
-		if v:IsA("Tool") and v.Name == name then
-			total += 1
-		end
+		if v:IsA("Tool") and v.Name == name then total += 1 end
 	end
 	return total
 end
-
--- VEHICLE TELEPORT
 
 local function vehicleTeleport(cf)
 	local char = player.Character
@@ -79,9 +72,7 @@ local function vehicleTeleport(cf)
 	if not seat then return end
 	local vehicle = seat:FindFirstAncestorOfClass("Model")
 	if not vehicle then return end
-	if not vehicle.PrimaryPart then
-		vehicle.PrimaryPart = seat
-	end
+	if not vehicle.PrimaryPart then vehicle.PrimaryPart = seat end
 	vehicle:SetPrimaryPartCFrame(cf)
 	task.wait(1)
 	seat.Throttle = 1
@@ -89,576 +80,1100 @@ local function vehicleTeleport(cf)
 	seat.Throttle = 0
 end
 
--- PROGRESS BAR FILL
-
-local function fill(bar,time)
+local function fill(bar, time)
 	bar.Size = UDim2.new(0,0,1,0)
-	bar:TweenSize(
-		UDim2.new(1,0,1,0),
-		Enum.EasingDirection.InOut,
-		Enum.EasingStyle.Linear,
-		time,
-		true
-	)
-	task.delay(time,function()
-		bar.Size = UDim2.new(0,0,1,0)
+	bar:TweenSize(UDim2.new(1,0,1,0), Enum.EasingDirection.InOut, Enum.EasingStyle.Linear, time, true)
+	task.delay(time, function() bar.Size = UDim2.new(0,0,1,0) end)
+end
+
+-- ============================================================
+-- GUI SETUP
+-- ============================================================
+local gui = Instance.new("ScreenGui")
+gui.Name = "ELIXIR_3_5"
+gui.Parent = playerGui
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- ============================================================
+-- COLOR PALETTE
+-- ============================================================
+local C = {
+	bg       = Color3.fromRGB(10, 10, 16),
+	surface  = Color3.fromRGB(16, 16, 26),
+	panel    = Color3.fromRGB(20, 20, 32),
+	card     = Color3.fromRGB(26, 26, 40),
+	sidebar  = Color3.fromRGB(13, 13, 22),
+	accent   = Color3.fromRGB(148, 75, 255),
+	accentDim= Color3.fromRGB(90, 45, 160),
+	accentGlow=Color3.fromRGB(180, 110, 255),
+	text     = Color3.fromRGB(230, 225, 255),
+	textMid  = Color3.fromRGB(160, 155, 190),
+	textDim  = Color3.fromRGB(90, 85, 115),
+	green    = Color3.fromRGB(60, 210, 120),
+	red      = Color3.fromRGB(230, 70, 80),
+	border   = Color3.fromRGB(40, 35, 65),
+}
+
+-- ============================================================
+-- NOTIFICATION SYSTEM
+-- ============================================================
+local notifContainer = Instance.new("Frame", gui)
+notifContainer.Size = UDim2.new(0, 280, 1, 0)
+notifContainer.Position = UDim2.new(1, -290, 0, 0)
+notifContainer.BackgroundTransparency = 1
+notifContainer.ZIndex = 100
+
+local notifLayout = Instance.new("UIListLayout", notifContainer)
+notifLayout.Padding = UDim.new(0, 6)
+notifLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+notifLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local notifPadding = Instance.new("UIPadding", notifContainer)
+notifPadding.PaddingBottom = UDim.new(0, 12)
+notifPadding.PaddingRight = UDim.new(0, 8)
+
+local notifCount = 0
+local function notify(title, msg, ntype)
+	notifCount += 1
+	local color = ntype == "success" and C.green or ntype == "error" and C.red or C.accent
+
+	local card = Instance.new("Frame", notifContainer)
+	card.Size = UDim2.new(1, 0, 0, 62)
+	card.BackgroundColor3 = C.card
+	card.BorderSizePixel = 0
+	card.ClipsDescendants = true
+	card.ZIndex = 100
+	card.LayoutOrder = notifCount
+
+	local corner = Instance.new("UICorner", card)
+	corner.CornerRadius = UDim.new(0, 10)
+
+	local stroke = Instance.new("UIStroke", card)
+	stroke.Color = color
+	stroke.Thickness = 1.2
+	stroke.Transparency = 0.4
+
+	local accent_bar = Instance.new("Frame", card)
+	accent_bar.Size = UDim2.new(0, 3, 1, 0)
+	accent_bar.BackgroundColor3 = color
+	accent_bar.BorderSizePixel = 0
+	accent_bar.ZIndex = 101
+
+	local icon = Instance.new("TextLabel", card)
+	icon.Position = UDim2.new(0, 12, 0, 10)
+	icon.Size = UDim2.new(0, 22, 0, 22)
+	icon.BackgroundTransparency = 1
+	icon.Text = ntype == "success" and "✓" or ntype == "error" and "✕" or "◆"
+	icon.TextColor3 = color
+	icon.Font = Enum.Font.GothamBlack
+	icon.TextSize = 14
+	icon.ZIndex = 101
+
+	local t = Instance.new("TextLabel", card)
+	t.Position = UDim2.new(0, 42, 0, 8)
+	t.Size = UDim2.new(1, -50, 0, 20)
+	t.BackgroundTransparency = 1
+	t.Text = title
+	t.Font = Enum.Font.GothamBold
+	t.TextSize = 13
+	t.TextColor3 = C.text
+	t.TextXAlignment = Enum.TextXAlignment.Left
+	t.ZIndex = 101
+
+	local m = Instance.new("TextLabel", card)
+	m.Position = UDim2.new(0, 42, 0, 28)
+	m.Size = UDim2.new(1, -50, 0, 28)
+	m.BackgroundTransparency = 1
+	m.Text = msg
+	m.Font = Enum.Font.Gotham
+	m.TextSize = 12
+	m.TextColor3 = C.textMid
+	m.TextXAlignment = Enum.TextXAlignment.Left
+	m.TextWrapped = true
+	m.ZIndex = 101
+
+	local bar = Instance.new("Frame", card)
+	bar.Position = UDim2.new(0, 3, 1, -3)
+	bar.Size = UDim2.new(1, -3, 0, 3)
+	bar.BackgroundColor3 = color
+	bar.BorderSizePixel = 0
+	bar.ZIndex = 101
+	Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 2)
+
+	card.Position = UDim2.new(1, 20, 0, 0)
+	TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {Position = UDim2.new(0,0,0,0)}):Play()
+	TweenService:Create(bar, TweenInfo.new(3.5, Enum.EasingStyle.Linear), {Size = UDim2.new(0,3,0,3)}):Play()
+
+	task.delay(3.5, function()
+		TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Position = UDim2.new(1,20,0,0)}):Play()
+		task.wait(0.35)
+		card:Destroy()
 	end)
 end
 
--- COOK LOOP
+-- ============================================================
+-- MAIN WINDOW
+-- ============================================================
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 680, 0, 440)
+main.Position = UDim2.new(0.5, -340, 0.5, -220)
+main.BackgroundColor3 = C.bg
+main.Active = true
+main.Draggable = true
+main.ClipsDescendants = false
 
+local mainCorner = Instance.new("UICorner", main)
+mainCorner.CornerRadius = UDim.new(0, 14)
+
+local mainStroke = Instance.new("UIStroke", main)
+mainStroke.Color = C.border
+mainStroke.Thickness = 1
+
+-- ============================================================
+-- TOP BAR
+-- ============================================================
+local topBar = Instance.new("Frame", main)
+topBar.Size = UDim2.new(1, 0, 0, 48)
+topBar.BackgroundColor3 = C.surface
+topBar.ZIndex = 2
+Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 14)
+
+-- fix bottom corners of topbar
+local topBarFix = Instance.new("Frame", topBar)
+topBarFix.Size = UDim2.new(1, 0, 0, 14)
+topBarFix.Position = UDim2.new(0, 0, 1, -14)
+topBarFix.BackgroundColor3 = C.surface
+topBarFix.BorderSizePixel = 0
+
+-- accent dot
+local dot = Instance.new("Frame", topBar)
+dot.Size = UDim2.new(0, 8, 0, 8)
+dot.Position = UDim2.new(0, 18, 0.5, -4)
+dot.BackgroundColor3 = C.accent
+dot.BorderSizePixel = 0
+Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+
+local titleLbl = Instance.new("TextLabel", topBar)
+titleLbl.Position = UDim2.new(0, 34, 0, 0)
+titleLbl.Size = UDim2.new(0, 200, 1, 0)
+titleLbl.BackgroundTransparency = 1
+titleLbl.Text = "ELIXIR  3.5"
+titleLbl.Font = Enum.Font.GothamBlack
+titleLbl.TextSize = 16
+titleLbl.TextColor3 = C.text
+titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+local subLbl = Instance.new("TextLabel", topBar)
+subLbl.Position = UDim2.new(0, 34, 0, 26)
+subLbl.Size = UDim2.new(0, 200, 0, 16)
+subLbl.BackgroundTransparency = 1
+subLbl.Text = "MARSHMALLOW FARM"
+subLbl.Font = Enum.Font.Gotham
+subLbl.TextSize = 10
+subLbl.TextColor3 = C.textDim
+subLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+-- version badge
+local badge = Instance.new("Frame", topBar)
+badge.Size = UDim2.new(0, 42, 0, 20)
+badge.Position = UDim2.new(0, 220, 0.5, -10)
+badge.BackgroundColor3 = C.accentDim
+badge.BorderSizePixel = 0
+Instance.new("UICorner", badge).CornerRadius = UDim.new(0, 4)
+local badgeTxt = Instance.new("TextLabel", badge)
+badgeTxt.Size = UDim2.new(1,0,1,0)
+badgeTxt.BackgroundTransparency = 1
+badgeTxt.Text = "v3.5"
+badgeTxt.Font = Enum.Font.GothamBold
+badgeTxt.TextSize = 11
+badgeTxt.TextColor3 = C.accentGlow
+
+-- close button
+local closeBtn = Instance.new("TextButton", topBar)
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -40, 0.5, -15)
+closeBtn.BackgroundColor3 = Color3.fromRGB(60, 20, 30)
+closeBtn.Text = "✕"
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 13
+closeBtn.TextColor3 = C.red
+closeBtn.BorderSizePixel = 0
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
+
+closeBtn.MouseButton1Click:Connect(function()
+	running = false
+	autoSellEnabled = false
+	notify("Elixir", "Script dihentikan.", "error")
+	task.wait(0.4)
+	gui:Destroy()
+end)
+
+-- minimize button
+local minBtn = Instance.new("TextButton", topBar)
+minBtn.Size = UDim2.new(0, 30, 0, 30)
+minBtn.Position = UDim2.new(1, -76, 0.5, -15)
+minBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+minBtn.Text = "—"
+minBtn.Font = Enum.Font.GothamBold
+minBtn.TextSize = 13
+minBtn.TextColor3 = C.textMid
+minBtn.BorderSizePixel = 0
+Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 8)
+
+-- ============================================================
+-- ICON SIDEBAR
+-- ============================================================
+local sidebar = Instance.new("Frame", main)
+sidebar.Size = UDim2.new(0, 56, 1, -48)
+sidebar.Position = UDim2.new(0, 0, 0, 48)
+sidebar.BackgroundColor3 = C.sidebar
+sidebar.ZIndex = 2
+Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 0)
+
+-- fix top-right corner
+local sidebarTopFix = Instance.new("Frame", sidebar)
+sidebarTopFix.Size = UDim2.new(1, 0, 0, 14)
+sidebarTopFix.BackgroundColor3 = C.sidebar
+sidebarTopFix.BorderSizePixel = 0
+
+local sidebarLayout = Instance.new("UIListLayout", sidebar)
+sidebarLayout.Padding = UDim.new(0, 4)
+sidebarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+sidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local sidebarPad = Instance.new("UIPadding", sidebar)
+sidebarPad.PaddingTop = UDim.new(0, 18)
+
+-- bottom-left corner rounding fix
+local blCorner = Instance.new("Frame", main)
+blCorner.Size = UDim2.new(0, 56, 0, 14)
+blCorner.Position = UDim2.new(0, 0, 1, -14)
+blCorner.BackgroundColor3 = C.sidebar
+blCorner.BorderSizePixel = 0
+
+-- ============================================================
+-- CONTENT AREA
+-- ============================================================
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1, -56, 1, -48)
+content.Position = UDim2.new(0, 56, 0, 48)
+content.BackgroundColor3 = C.panel
+content.ClipsDescendants = true
+Instance.new("UICorner", content).CornerRadius = UDim.new(0, 0)
+
+-- fix top-left inner corner
+local contentFix = Instance.new("Frame", content)
+contentFix.Size = UDim2.new(0, 14, 1, 0)
+contentFix.BackgroundColor3 = C.panel
+contentFix.BorderSizePixel = 0
+
+-- ============================================================
+-- TAB SYSTEM
+-- ============================================================
+local pages = {}
+local tabBtns = {}
+local currentTab = nil
+
+local tabDefs = {
+	{icon = "⚡", name = "FARM",      order = 1},
+	{icon = "🤖", name = "AUTO",      order = 2},
+	{icon = "📊", name = "STATUS",    order = 3},
+	{icon = "📍", name = "TP",        order = 4},
+	{icon = "👁", name = "ESP",       order = 5},
+	{icon = "🔄", name = "RESPAWN",   order = 6},
+}
+
+local function switchTab(name)
+	for n, p in pairs(pages) do
+		p.Visible = (n == name)
+	end
+	for n, b in pairs(tabBtns) do
+		if n == name then
+			b.BackgroundColor3 = C.accentDim
+			b.TextColor3 = C.accentGlow
+		else
+			b.BackgroundColor3 = Color3.fromRGB(0,0,0)
+			b.BackgroundTransparency = 1
+			b.TextColor3 = C.textDim
+		end
+	end
+	currentTab = name
+end
+
+for i, def in ipairs(tabDefs) do
+	local btn = Instance.new("TextButton", sidebar)
+	btn.Size = UDim2.new(0, 42, 0, 42)
+	btn.BackgroundTransparency = 1
+	btn.Text = def.icon
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 18
+	btn.TextColor3 = C.textDim
+	btn.BorderSizePixel = 0
+	btn.LayoutOrder = def.order
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+
+	-- tooltip label
+	local tip = Instance.new("TextLabel", btn)
+	tip.Size = UDim2.new(0, 70, 0, 22)
+	tip.Position = UDim2.new(1, 4, 0.5, -11)
+	tip.BackgroundColor3 = C.card
+	tip.BorderSizePixel = 0
+	tip.Text = def.name
+	tip.Font = Enum.Font.GothamBold
+	tip.TextSize = 11
+	tip.TextColor3 = C.text
+	tip.Visible = false
+	tip.ZIndex = 200
+	Instance.new("UICorner", tip).CornerRadius = UDim.new(0, 6)
+
+	btn.MouseEnter:Connect(function() tip.Visible = true end)
+	btn.MouseLeave:Connect(function() tip.Visible = false end)
+
+	local page = Instance.new("ScrollingFrame", content)
+	page.Size = UDim2.new(1, 0, 1, 0)
+	page.BackgroundTransparency = 1
+	page.ScrollBarThickness = 3
+	page.ScrollBarImageColor3 = C.accent
+	page.Visible = false
+	page.BorderSizePixel = 0
+
+	local layout = Instance.new("UIListLayout", page)
+	layout.Padding = UDim.new(0, 8)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+	local pad = Instance.new("UIPadding", page)
+	pad.PaddingTop = UDim.new(0, 16)
+	pad.PaddingLeft = UDim.new(0, 14)
+	pad.PaddingRight = UDim.new(0, 14)
+	pad.PaddingBottom = UDim.new(0, 16)
+
+	pages[def.name] = page
+	tabBtns[def.name] = btn
+
+	btn.MouseButton1Click:Connect(function()
+		switchTab(def.name)
+	end)
+end
+
+-- ============================================================
+-- UI COMPONENT BUILDERS
+-- ============================================================
+local function sectionLabel(parent, text, order)
+	local lbl = Instance.new("TextLabel", parent)
+	lbl.Size = UDim2.new(1, 0, 0, 18)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = text:upper()
+	lbl.Font = Enum.Font.GothamBold
+	lbl.TextSize = 10
+	lbl.TextColor3 = C.textDim
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	lbl.LayoutOrder = order or 0
+	return lbl
+end
+
+local function card(parent, h, order)
+	local f = Instance.new("Frame", parent)
+	f.Size = UDim2.new(1, 0, 0, h or 48)
+	f.BackgroundColor3 = C.card
+	f.BorderSizePixel = 0
+	f.LayoutOrder = order or 0
+	local c = Instance.new("UICorner", f)
+	c.CornerRadius = UDim.new(0, 10)
+	local s = Instance.new("UIStroke", f)
+	s.Color = C.border
+	s.Thickness = 1
+	return f
+end
+
+local function makeToggleBtn(parent, text, order)
+	local f = card(parent, 38, order)
+	local btn = Instance.new("TextButton", f)
+	btn.Size = UDim2.new(1, 0, 1, 0)
+	btn.BackgroundTransparency = 1
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 13
+	btn.TextColor3 = C.text
+	btn.Text = text
+	btn.BorderSizePixel = 0
+
+	-- pill indicator
+	local pill = Instance.new("Frame", f)
+	pill.Size = UDim2.new(0, 30, 0, 16)
+	pill.Position = UDim2.new(1, -42, 0.5, -8)
+	pill.BackgroundColor3 = C.textDim
+	pill.BorderSizePixel = 0
+	Instance.new("UICorner", pill).CornerRadius = UDim.new(1, 0)
+
+	local knob = Instance.new("Frame", pill)
+	knob.Size = UDim2.new(0, 12, 0, 12)
+	knob.Position = UDim2.new(0, 2, 0.5, -6)
+	knob.BackgroundColor3 = Color3.new(1,1,1)
+	knob.BorderSizePixel = 0
+	Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+	local state = false
+	local function setToggle(on)
+		state = on
+		if on then
+			TweenService:Create(pill, TweenInfo.new(0.2), {BackgroundColor3 = C.accent}):Play()
+			TweenService:Create(knob, TweenInfo.new(0.2), {Position = UDim2.new(1, -14, 0.5, -6)}):Play()
+			btn.TextColor3 = C.accentGlow
+		else
+			TweenService:Create(pill, TweenInfo.new(0.2), {BackgroundColor3 = C.textDim}):Play()
+			TweenService:Create(knob, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -6)}):Play()
+			btn.TextColor3 = C.text
+		end
+	end
+
+	btn.MouseButton1Click:Connect(function()
+		setToggle(not state)
+	end)
+
+	return btn, f, setToggle
+end
+
+local function makeActionBtn(parent, text, color, order)
+	local f = Instance.new("TextButton", parent)
+	f.Size = UDim2.new(1, 0, 0, 38)
+	f.BackgroundColor3 = color or C.accentDim
+	f.Font = Enum.Font.GothamBold
+	f.TextSize = 13
+	f.TextColor3 = C.text
+	f.Text = text
+	f.BorderSizePixel = 0
+	f.LayoutOrder = order or 0
+	Instance.new("UICorner", f).CornerRadius = UDim.new(0, 10)
+	local s = Instance.new("UIStroke", f)
+	s.Color = C.border
+	s.Thickness = 1
+
+	f.MouseEnter:Connect(function()
+		TweenService:Create(f, TweenInfo.new(0.15), {BackgroundColor3 = C.accent}):Play()
+	end)
+	f.MouseLeave:Connect(function()
+		TweenService:Create(f, TweenInfo.new(0.15), {BackgroundColor3 = color or C.accentDim}):Play()
+	end)
+	return f
+end
+
+local function makeSlider(parent, labelText, minV, maxV, defaultV, order, callback)
+	local wrap = card(parent, 56, order)
+	local lbl = Instance.new("TextLabel", wrap)
+	lbl.Position = UDim2.new(0, 12, 0, 8)
+	lbl.Size = UDim2.new(1, -80, 0, 18)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = labelText
+	lbl.Font = Enum.Font.GothamSemibold
+	lbl.TextSize = 12
+	lbl.TextColor3 = C.textMid
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+	local valLbl = Instance.new("TextLabel", wrap)
+	valLbl.Position = UDim2.new(1, -54, 0, 8)
+	valLbl.Size = UDim2.new(0, 44, 0, 18)
+	valLbl.BackgroundTransparency = 1
+	valLbl.Text = tostring(defaultV)
+	valLbl.Font = Enum.Font.GothamBold
+	valLbl.TextSize = 13
+	valLbl.TextColor3 = C.accentGlow
+	valLbl.TextXAlignment = Enum.TextXAlignment.Right
+
+	local track = Instance.new("Frame", wrap)
+	track.Position = UDim2.new(0, 12, 0, 36)
+	track.Size = UDim2.new(1, -24, 0, 4)
+	track.BackgroundColor3 = C.border
+	track.BorderSizePixel = 0
+	Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
+
+	local fill2 = Instance.new("Frame", track)
+	fill2.Size = UDim2.new((defaultV - minV)/(maxV - minV), 0, 1, 0)
+	fill2.BackgroundColor3 = C.accent
+	fill2.BorderSizePixel = 0
+	Instance.new("UICorner", fill2).CornerRadius = UDim.new(1, 0)
+
+	local knob2 = Instance.new("Frame", track)
+	local kp = (defaultV - minV)/(maxV - minV)
+	knob2.Size = UDim2.new(0, 14, 0, 14)
+	knob2.Position = UDim2.new(kp, -7, 0.5, -7)
+	knob2.BackgroundColor3 = Color3.new(1,1,1)
+	knob2.BorderSizePixel = 0
+	Instance.new("UICorner", knob2).CornerRadius = UDim.new(1, 0)
+	local ks = Instance.new("UIStroke", knob2)
+	ks.Color = C.accent
+	ks.Thickness = 2
+
+	local dragging2 = false
+	local function update(x)
+		local pos = math.clamp((x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+		local val = math.floor(minV + pos * (maxV - minV))
+		knob2.Position = UDim2.new(pos, -7, 0.5, -7)
+		fill2.Size = UDim2.new(pos, 0, 1, 0)
+		valLbl.Text = tostring(val)
+		if callback then callback(val) end
+	end
+
+	track.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging2 = true
+			update(inp.Position.X)
+		end
+	end)
+	UIS.InputChanged:Connect(function(inp)
+		if dragging2 and inp.UserInputType == Enum.UserInputType.MouseMovement then
+			update(inp.Position.X)
+		end
+	end)
+	UIS.InputEnded:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging2 = false
+		end
+	end)
+
+	return wrap, valLbl
+end
+
+local function makeStatusRow(parent, icon, label, order)
+	local f = card(parent, 32, order)
+	local ic = Instance.new("TextLabel", f)
+	ic.Position = UDim2.new(0, 10, 0.5, -9)
+	ic.Size = UDim2.new(0, 18, 0, 18)
+	ic.BackgroundTransparency = 1
+	ic.Text = icon
+	ic.TextSize = 14
+	ic.Font = Enum.Font.Gotham
+
+	local lbl2 = Instance.new("TextLabel", f)
+	lbl2.Position = UDim2.new(0, 32, 0, 0)
+	lbl2.Size = UDim2.new(0.5, 0, 1, 0)
+	lbl2.BackgroundTransparency = 1
+	lbl2.Text = label
+	lbl2.Font = Enum.Font.GothamSemibold
+	lbl2.TextSize = 12
+	lbl2.TextColor3 = C.textMid
+	lbl2.TextXAlignment = Enum.TextXAlignment.Left
+
+	local val2 = Instance.new("TextLabel", f)
+	val2.Position = UDim2.new(0.5, 0, 0, 0)
+	val2.Size = UDim2.new(0.5, -10, 1, 0)
+	val2.BackgroundTransparency = 1
+	val2.Text = "0"
+	val2.Font = Enum.Font.GothamBold
+	val2.TextSize = 13
+	val2.TextColor3 = C.accentGlow
+	val2.TextXAlignment = Enum.TextXAlignment.Right
+
+	return val2, f
+end
+
+-- ============================================================
+-- FARM PAGE
+-- ============================================================
+local fp = pages["FARM"]
+
+sectionLabel(fp, "Status", 1)
+
+local statusCard = card(fp, 38, 2)
+local statusLabel = Instance.new("TextLabel", statusCard)
+statusLabel.Size = UDim2.new(1, -20, 1, 0)
+statusLabel.Position = UDim2.new(0, 12, 0, 0)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "⬤  IDLE"
+statusLabel.Font = Enum.Font.GothamBold
+statusLabel.TextSize = 13
+statusLabel.TextColor3 = C.textMid
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+sectionLabel(fp, "Inventory", 3)
+
+local waterVal, _  = makeStatusRow(fp, "💧", "Water",            4)
+local sugarVal, _  = makeStatusRow(fp, "🧊", "Sugar Block Bag",  5)
+local gelatinVal,_ = makeStatusRow(fp, "🧪", "Gelatin",          6)
+local bagVal, _    = makeStatusRow(fp, "📦", "Empty Bag",        7)
+
+sectionLabel(fp, "Controls", 8)
+
+local _, _, setBuySlider
+local buySliderWrap, buyValLbl = makeSlider(fp, "BUY AMOUNT", 1, 25, 1, 9, function(v)
+	buyAmount = v
+end)
+
+local farmToggleBtn = makeActionBtn(fp, "▶  START FARM", C.accentDim, 10)
+local sellToggleBtn = makeActionBtn(fp, "💰  AUTO SELL : OFF", C.card, 11)
+local buyNowBtn     = makeActionBtn(fp, "🛒  BUY NOW", C.card, 12)
+
+-- progress bars
+sectionLabel(fp, "Cook Progress", 13)
+local function makeProgressCard(icon, label, order)
+	local f = card(fp, 36, order)
+	local lbl3 = Instance.new("TextLabel", f)
+	lbl3.Position = UDim2.new(0, 10, 0, 6)
+	lbl3.Size = UDim2.new(0.5, 0, 0, 14)
+	lbl3.BackgroundTransparency = 1
+	lbl3.Text = icon .. "  " .. label
+	lbl3.Font = Enum.Font.GothamSemibold
+	lbl3.TextSize = 11
+	lbl3.TextColor3 = C.textMid
+	lbl3.TextXAlignment = Enum.TextXAlignment.Left
+	local bg2 = Instance.new("Frame", f)
+	bg2.Position = UDim2.new(0, 10, 0, 24)
+	bg2.Size = UDim2.new(1, -20, 0, 5)
+	bg2.BackgroundColor3 = C.border
+	bg2.BorderSizePixel = 0
+	Instance.new("UICorner", bg2).CornerRadius = UDim.new(1, 0)
+	local bar2 = Instance.new("Frame", bg2)
+	bar2.Size = UDim2.new(0, 0, 1, 0)
+	bar2.BackgroundColor3 = C.accent
+	bar2.BorderSizePixel = 0
+	Instance.new("UICorner", bar2).CornerRadius = UDim.new(1, 0)
+	return bar2
+end
+
+local waterBar   = makeProgressCard("💧", "Water (20s)",   14)
+local sugarBar   = makeProgressCard("🧊", "Sugar (1s)",    15)
+local gelatinBar = makeProgressCard("🧪", "Gelatin (1s)",  16)
+local bagBar     = makeProgressCard("📦", "Bag (45s)",     17)
+
+-- ============================================================
+-- AUTO PAGE
+-- ============================================================
+local ap = pages["AUTO"]
+
+sectionLabel(ap, "Auto Farm", 1)
+
+local autoFarmToggle, autoFarmCard = makeToggleBtn(ap, "Auto Farm Loop", 2)
+autoFarmCard.Size = UDim2.new(1,0,0,44)
+
+local _, cookValLbl = makeSlider(ap, "COOK AMOUNT", 1, 50, 5, 3, function(v)
+	cookAmount = v
+end)
+
+sectionLabel(ap, "Protection", 4)
+local antiHitToggle, antiHitCard = makeToggleBtn(ap, "Anti Hit + Anti Approach", 5)
+antiHitCard.Size = UDim2.new(1,0,0,44)
+
+local antiStatusCard = card(ap, 32, 6)
+local antiStatusLbl = Instance.new("TextLabel", antiStatusCard)
+antiStatusLbl.Size = UDim2.new(1,-20,1,0)
+antiStatusLbl.Position = UDim2.new(0,12,0,0)
+antiStatusLbl.BackgroundTransparency = 1
+antiStatusLbl.Text = "🛡️  Idle"
+antiStatusLbl.Font = Enum.Font.Gotham
+antiStatusLbl.TextSize = 12
+antiStatusLbl.TextColor3 = C.textMid
+antiStatusLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+-- ============================================================
+-- STATUS PAGE
+-- ============================================================
+local sp = pages["STATUS"]
+
+-- avatar card
+local avatarCard = card(sp, 72, 1)
+local avatarImg2 = Instance.new("ImageLabel", avatarCard)
+avatarImg2.Position = UDim2.new(0, 10, 0.5, -28)
+avatarImg2.Size = UDim2.new(0, 56, 0, 56)
+avatarImg2.BackgroundColor3 = C.border
+avatarImg2.BorderSizePixel = 0
+Instance.new("UICorner", avatarImg2).CornerRadius = UDim.new(0, 10)
+
+local usernameLbl = Instance.new("TextLabel", avatarCard)
+usernameLbl.Position = UDim2.new(0, 76, 0, 14)
+usernameLbl.Size = UDim2.new(1, -86, 0, 22)
+usernameLbl.BackgroundTransparency = 1
+usernameLbl.Text = player.Name
+usernameLbl.Font = Enum.Font.GothamBlack
+usernameLbl.TextSize = 16
+usernameLbl.TextColor3 = C.text
+usernameLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+local displayLbl = Instance.new("TextLabel", avatarCard)
+displayLbl.Position = UDim2.new(0, 76, 0, 38)
+displayLbl.Size = UDim2.new(1, -86, 0, 16)
+displayLbl.BackgroundTransparency = 1
+displayLbl.Text = "@" .. player.DisplayName
+displayLbl.Font = Enum.Font.Gotham
+displayLbl.TextSize = 12
+displayLbl.TextColor3 = C.textDim
+displayLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+task.spawn(function()
+	local img, _ = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+	avatarImg2.Image = img
+end)
+
+sectionLabel(sp, "Inventory", 2)
+local statWaterVal   = makeStatusRow(sp, "💧", "Water",           3)
+local statSugarVal   = makeStatusRow(sp, "🧊", "Sugar Block Bag", 4)
+local statGelatinVal = makeStatusRow(sp, "🧪", "Gelatin",         5)
+local statBagVal     = makeStatusRow(sp, "📦", "Empty Bag",       6)
+
+sectionLabel(sp, "Marshmallow Bags", 7)
+local statSmallVal  = makeStatusRow(sp, "🍬", "Small Bag",  8)
+local statMedVal    = makeStatusRow(sp, "🍬", "Medium Bag", 9)
+local statLargeVal  = makeStatusRow(sp, "🍬", "Large Bag",  10)
+
+local totalCard = card(sp, 38, 11)
+local totalLblLeft = Instance.new("TextLabel", totalCard)
+totalLblLeft.Position = UDim2.new(0,12,0,0)
+totalLblLeft.Size = UDim2.new(0.5,0,1,0)
+totalLblLeft.BackgroundTransparency = 1
+totalLblLeft.Text = "Total Bags"
+totalLblLeft.Font = Enum.Font.GothamBold
+totalLblLeft.TextSize = 13
+totalLblLeft.TextColor3 = C.text
+totalLblLeft.TextXAlignment = Enum.TextXAlignment.Left
+local totalVal = Instance.new("TextLabel", totalCard)
+totalVal.Position = UDim2.new(0.5,0,0,0)
+totalVal.Size = UDim2.new(0.5,-12,1,0)
+totalVal.BackgroundTransparency = 1
+totalVal.Text = "0"
+totalVal.Font = Enum.Font.GothamBlack
+totalVal.TextSize = 16
+totalVal.TextColor3 = C.accentGlow
+totalVal.TextXAlignment = Enum.TextXAlignment.Right
+
+-- ============================================================
+-- TELEPORT PAGE
+-- ============================================================
+local tp = pages["TP"]
+
+local apart1 = CFrame.new(1140.319091796875,10.105062484741211,450.2520446777344)*CFrame.new(0,2,0)
+local apart2 = CFrame.new(1141.39099,10.1050625,422.805542)*CFrame.new(0,2,0)
+local apart3 = CFrame.new(986.987305,10.1050644,248.435837)*CFrame.new(0,2,0)
+local apart4 = CFrame.new(986.299194,10.1050644,219.940186)*CFrame.new(0,2,0)
+local apart5 = CFrame.new(924.781006,10.1050644,41.1367264)*CFrame.Angles(0,math.rad(90),0)
+local apart6 = CFrame.new(896.671997,10.1050644,40.6403999)*CFrame.Angles(0,math.rad(90),0)
+local csn1 = CFrame.new(1178.8331298828125,3.95,-227.3722381591797)
+local csn2 = CFrame.new(1205.0880126953125,3.95,-220.54200744628906)
+local csn3 = CFrame.new(1204.281005859375,3.7122225761413574,-182.851318359375)
+local csn4 = CFrame.new(1178.5850830078125,3.712223529815674,-189.7107696533203)
+
+local function tpBtn(label, cf, order)
+	local b = makeActionBtn(tp, label, C.card, order)
+	b.MouseButton1Click:Connect(function()
+		notify("Teleport", "Menuju "..label.."...", "info")
+		vehicleTeleport(cf)
+		notify("Teleport", "Tiba di "..label, "success")
+	end)
+end
+
+sectionLabel(tp, "Quick", 1)
+tpBtn("🏪  NPC Store",  npcPos, 2)
+tpBtn("🏆  Tier",       tierPos, 3)
+sectionLabel(tp, "Apartments", 4)
+tpBtn("🏠  Apart 1", apart1, 5)
+tpBtn("🏠  Apart 2", apart2, 6)
+tpBtn("🏠  Apart 3", apart3, 7)
+tpBtn("🏠  Apart 4", apart4, 8)
+tpBtn("🏠  Apart 5", apart5, 9)
+tpBtn("🏠  Apart 6", apart6, 10)
+sectionLabel(tp, "CSN", 11)
+tpBtn("📍  CSN 1", csn1, 12)
+tpBtn("📍  CSN 2", csn2, 13)
+tpBtn("📍  CSN 3", csn3, 14)
+tpBtn("📍  CSN 4", csn4, 15)
+
+-- ============================================================
+-- ESP PAGE
+-- ============================================================
+local ep = pages["ESP"]
+
+local MaxDistance = 500
+local Enabled = false
+local ShowName = true
+local ShowHealth = true
+local ShowDistance = true
+
+sectionLabel(ep, "ESP Settings", 1)
+
+local espToggle, espCard, setEsp = makeToggleBtn(ep, "ESP Enabled", 2)
+espCard.Size = UDim2.new(1,0,0,44)
+
+local nameToggle, nameCard, setName = makeToggleBtn(ep, "Show Names", 3)
+nameCard.Size = UDim2.new(1,0,0,44)
+setName(true)
+
+local healthToggle, healthCard, setHealth = makeToggleBtn(ep, "Show Health Bar", 4)
+healthCard.Size = UDim2.new(1,0,0,44)
+setHealth(true)
+
+local distToggle, distCard, setDist = makeToggleBtn(ep, "Show Distance", 5)
+distCard.Size = UDim2.new(1,0,0,44)
+setDist(true)
+
+makeSlider(ep, "MAX DISTANCE", 50, 8000, 500, 6, function(v)
+	MaxDistance = v
+end)
+
+espToggle.MouseButton1Click:Connect(function()
+	Enabled = not Enabled
+	setEsp(Enabled)
+	notify("ESP", Enabled and "ESP diaktifkan" or "ESP dimatikan", Enabled and "success" or "error")
+end)
+nameToggle.MouseButton1Click:Connect(function() ShowName = not ShowName end)
+healthToggle.MouseButton1Click:Connect(function() ShowHealth = not ShowHealth end)
+distToggle.MouseButton1Click:Connect(function() ShowDistance = not ShowDistance end)
+
+-- ============================================================
+-- RESPAWN PAGE
+-- ============================================================
+local rp = pages["RESPAWN"]
+
+local selectedSpawn = nil
+
+local respStatusCard = card(rp, 38, 1)
+local respStatusLbl = Instance.new("TextLabel", respStatusCard)
+respStatusLbl.Size = UDim2.new(1,-20,1,0)
+respStatusLbl.Position = UDim2.new(0,12,0,0)
+respStatusLbl.BackgroundTransparency = 1
+respStatusLbl.Text = "📍 Belum dipilih"
+respStatusLbl.Font = Enum.Font.GothamSemibold
+respStatusLbl.TextSize = 12
+respStatusLbl.TextColor3 = C.textMid
+respStatusLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+sectionLabel(rp, "Pilih Spawn", 2)
+
+local spawnBtns = {}
+local function makeSpawnBtn2(name, pos, order)
+	local b = makeActionBtn(rp, name, C.card, order)
+	b.MouseButton1Click:Connect(function()
+		selectedSpawn = pos
+		for _, sb in pairs(spawnBtns) do
+			TweenService:Create(sb, TweenInfo.new(0.15), {BackgroundColor3 = C.card}):Play()
+		end
+		TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = C.accentDim}):Play()
+		respStatusLbl.Text = "📍 " .. name:gsub("^[^ ]+ ", "")
+		notify("Spawn", name .. " dipilih", "success")
+	end)
+	table.insert(spawnBtns, b)
+end
+
+makeSpawnBtn2("🚀  Dealer",     Vector3.new(511,3,601),         3)
+makeSpawnBtn2("🏥  RS 1",       Vector3.new(1140.8,10.1,451.8), 4)
+makeSpawnBtn2("🏥  RS 2",       Vector3.new(1141.2,10.1,423.2), 5)
+makeSpawnBtn2("🏠  Tier 1",     Vector3.new(985.9,10.1,247),    6)
+makeSpawnBtn2("🏠  Tier 2",     Vector3.new(989.3,11.0,228.3),  7)
+makeSpawnBtn2("🗑️  Trash 1",    Vector3.new(890.9,10.1,44.3),   8)
+makeSpawnBtn2("🗑️  Trash 2",    Vector3.new(920.4,10.1,46.3),   9)
+makeSpawnBtn2("🚗  Dealership", Vector3.new(733.5,4.6,431.9),   10)
+makeSpawnBtn2("🔫  GS Ujung",   Vector3.new(-467.1,4.8,353.5),  11)
+makeSpawnBtn2("🔫  GS Mid",     Vector3.new(218.7,3.7,-176.2),  12)
+
+local respawnBtn = makeActionBtn(rp, "🔄  RESPAWN SEKARANG", C.accent, 13)
+
+-- LOADING OVERLAY
+local loadingGui = Instance.new("ScreenGui", player.PlayerGui)
+loadingGui.IgnoreGuiInset = true
+loadingGui.ResetOnSpawn = false
+local loadBg = Instance.new("Frame", loadingGui)
+loadBg.Size = UDim2.new(1,0,1,0)
+loadBg.BackgroundColor3 = Color3.new(0,0,0)
+loadBg.BackgroundTransparency = 0.3
+loadBg.Visible = false
+local loadLbl = Instance.new("TextLabel", loadBg)
+loadLbl.Size = UDim2.new(1,0,0,60)
+loadLbl.Position = UDim2.new(0,0,0.5,-30)
+loadLbl.BackgroundTransparency = 1
+loadLbl.Text = "ELIXIR"
+loadLbl.TextScaled = true
+loadLbl.Font = Enum.Font.GothamBlack
+loadLbl.TextColor3 = C.accent
+
+local function showLoading() loadBg.Visible = true end
+local function hideLoading() loadBg.Visible = false end
+
+respawnBtn.MouseButton1Click:Connect(function()
+	if not selectedSpawn then
+		notify("Respawn", "Pilih spawn terlebih dulu!", "error")
+		return
+	end
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+	notify("Respawn", "Sedang respawn...", "info")
+	local StarterGui = game:GetService("StarterGui")
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
+	loadLbl.Text = "RESPAWNING..."
+	showLoading()
+	task.wait(0.3)
+	hum.Health = 0
+	task.wait(0.2)
+	player.CharacterAdded:Wait()
+	task.wait(1)
+	local newChar = player.Character
+	local hrp = newChar and newChar:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		hrp.CFrame = CFrame.new(selectedSpawn)
+		task.wait(0.3)
+	end
+	hideLoading()
+	loadLbl.Text = "ELIXIR"
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true)
+	notify("Respawn", "Berhasil respawn!", "success")
+	respStatusLbl.Text = "✅ Respawn berhasil!"
+end)
+
+-- ============================================================
+-- FARM LOGIC (same as original, wired to new UI)
+-- ============================================================
 local function cook()
 	while running do
 		if equip("Water") then
-			if statusLabel then statusLabel.Text = "Cooking Water..." end
-			if waterBar then fill(waterBar,20) end
+			statusLabel.Text = "⬤  Cooking Water..."
+			statusLabel.TextColor3 = C.accentGlow
+			if waterBar then fill(waterBar, 20) end
 			holdE(.7)
 			task.wait(20)
 		end
 		if equip("Sugar Block Bag") then
-			if statusLabel then statusLabel.Text = "Cooking Sugar..." end
-			if sugarBar then fill(sugarBar,1) end
+			statusLabel.Text = "⬤  Cooking Sugar..."
+			if sugarBar then fill(sugarBar, 1) end
 			holdE(.7)
 			task.wait(1)
 		end
 		if equip("Gelatin") then
-			if statusLabel then statusLabel.Text = "Cooking Gelatin..." end
-			if gelatinBar then fill(gelatinBar,1) end
+			statusLabel.Text = "⬤  Cooking Gelatin..."
+			if gelatinBar then fill(gelatinBar, 1) end
 			holdE(.7)
 			task.wait(1)
 		end
-		if statusLabel then statusLabel.Text = "Waiting..." end
-		if bagBar then fill(bagBar,45) end
+		statusLabel.Text = "⬤  Waiting..."
+		if bagBar then fill(bagBar, 45) end
 		task.wait(45)
 		if equip("Empty Bag") then
-			if statusLabel then statusLabel.Text = "Collecting..." end
+			statusLabel.Text = "⬤  Collecting..."
 			holdE(.7)
 			task.wait(1)
 		end
 	end
+	statusLabel.Text = "⬤  IDLE"
+	statusLabel.TextColor3 = C.textMid
 end
 
--- AUTO BUY
-
 local buying = false
-
 local function autoBuy()
 	if buying then return end
 	buying = true
-	if statusLabel then statusLabel.Text = "Buying "..buyAmount end
+	notify("Buy", "Membeli x" .. buyAmount, "info")
 	for i = 1, buyAmount do
-		buyRemote:FireServer("Water")
-		task.wait(.35)
-		buyRemote:FireServer("Sugar Block Bag")
-		task.wait(.35)
-		buyRemote:FireServer("Gelatin")
-		task.wait(.35)
-		buyRemote:FireServer("Empty Bag")
-		task.wait(.45)
+		buyRemote:FireServer("Water") task.wait(.35)
+		buyRemote:FireServer("Sugar Block Bag") task.wait(.35)
+		buyRemote:FireServer("Gelatin") task.wait(.35)
+		buyRemote:FireServer("Empty Bag") task.wait(.45)
 	end
-	if statusLabel then statusLabel.Text = "Bought "..buyAmount end
+	notify("Buy", "Selesai beli x" .. buyAmount, "success")
 	buying = false
 end
 
--- AUTO SELL
-
 local function autoSell()
-	local bags = {
-		"Small Marshmallow Bag",
-		"Medium Marshmallow Bag",
-		"Large Marshmallow Bag"
-	}
+	local bags = {"Small Marshmallow Bag","Medium Marshmallow Bag","Large Marshmallow Bag"}
 	for _,bag in pairs(bags) do
 		while countItem(bag) > 0 and autoSellEnabled do
-			if equip(bag) then
-				if statusLabel then statusLabel.Text = "Selling "..bag end
-				holdE(.7)
-				task.wait(1)
-			else
-				break
-			end
+			if equip(bag) then holdE(.7) task.wait(1)
+			else break end
 		end
 	end
-	if statusLabel then statusLabel.Text = "Sell Finished" end
+	notify("Sell", "Semua bag terjual!", "success")
 end
 
--- CARD CREATOR
-local function createCard(title)
-	local card = Instance.new("Frame")
-	card.Size = UDim2.new(0.48,0,0,60)
-	card.BackgroundColor3 = Color3.fromRGB(28,28,36)
-	Instance.new("UICorner",card)
-	local name = Instance.new("TextLabel",card)
-	name.Size = UDim2.new(1,0,0,20)
-	name.BackgroundTransparency = 1
-	name.Text = title
-	name.Font = Enum.Font.GothamSemibold
-	name.TextSize = 13
-	name.TextColor3 = Color3.fromRGB(210,210,210)
-	local value = Instance.new("TextLabel",card)
-	value.Position = UDim2.new(0,0,0,22)
-	value.Size = UDim2.new(1,0,1,-22)
-	value.BackgroundTransparency = 1
-	value.Text = "0"
-	value.Font = Enum.Font.GothamBold
-	value.TextSize = 20
-	value.TextColor3 = Color3.fromRGB(170,90,255)
-	return value,card
-end
-
--- STATUS LABEL VARIABLES
-
-local smallLabel
-local mediumLabel
-local largeLabel
-local totalLabel
-local waterStatus
-local sugarStatus
-local gelatinStatus
-local bagStatus
-
--- GUI PREMIUM BASE
-
-local gui = Instance.new("ScreenGui")
-gui.Name = "ELIXIR_3_1"
-gui.Parent = playerGui
-gui.ResetOnSpawn = false
-
-local accent = Color3.fromRGB(170,90,255)
-
--- MAIN WINDOW
-
-local main = Instance.new("Frame",gui)
-main.Size = UDim2.new(0,720,0,430)
-main.Position = UDim2.new(0.5,-360,0.5,-215)
-main.BackgroundColor3 = Color3.fromRGB(14,14,18)
-main.Active = true
-main.Draggable = true
-
-Instance.new("UICorner",main)
-local stroke = Instance.new("UIStroke",main)
-stroke.Color = accent
-stroke.Thickness = 2
-
--- TOP BAR
-
-local top = Instance.new("Frame",main)
-top.Size = UDim2.new(1,0,0,40)
-top.BackgroundColor3 = Color3.fromRGB(18,18,24)
-
-local title = Instance.new("TextLabel",top)
-title.Size = UDim2.new(1,0,1,0)
-title.BackgroundTransparency = 1
-title.Text = "ELIXIR 3.1"
-title.Font = Enum.Font.GothamBlack
-title.TextSize = 18
-title.TextColor3 = accent
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Position = UDim2.new(0,10,0,0)
-
--- CLOSE BUTTON
-
-local close = Instance.new("TextButton",top)
-close.Size = UDim2.new(0,28,0,28)
-close.Position = UDim2.new(1,-34,0,6)
-close.Text = "X"
-close.BackgroundColor3 = Color3.fromRGB(60,20,20)
-close.TextColor3 = Color3.new(1,1,1)
-close.Font = Enum.Font.GothamBold
-close.TextSize = 14
-
-Instance.new("UICorner",close)
-
-close.MouseButton1Click:Connect(function()
-	running = false
-	autoSellEnabled = false
-	gui:Destroy()
-end)
-
--- SIDEBAR
-
-local sidebar = Instance.new("Frame",main)
-sidebar.Size = UDim2.new(0,180,1,-40)
-sidebar.Position = UDim2.new(0,0,0,40)
-sidebar.BackgroundColor3 = Color3.fromRGB(22,18,30)
-
--- CONTENT
-
-local content = Instance.new("Frame",main)
-content.Size = UDim2.new(1,-180,1,-40)
-content.Position = UDim2.new(0,180,0,40)
-content.BackgroundColor3 = Color3.fromRGB(20,20,28)
-
--- TAB SYSTEM
-
-local pages = {}
-
-local function createTab(name,y)
-	local btn = Instance.new("TextButton",sidebar)
-	btn.Size = UDim2.new(1,-20,0,36)
-	btn.Position = UDim2.new(0,10,0,y)
-	btn.Text = name
-	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 14
-	btn.BackgroundColor3 = Color3.fromRGB(32,24,45)
-	btn.TextColor3 = Color3.fromRGB(230,230,230)
-	Instance.new("UICorner",btn)
-
-	local page = Instance.new("ScrollingFrame",content)
-	page.Size = UDim2.new(1,0,1,0)
-	page.BackgroundTransparency = 1
-	page.ScrollBarThickness = 4
-	page.Visible = false
-
-	local layout = Instance.new("UIListLayout",page)
-	layout.Padding = UDim.new(0,8)
-
-	local padding = Instance.new("UIPadding",page)
-	padding.PaddingTop = UDim.new(0,10)
-	padding.PaddingLeft = UDim.new(0,10)
-	padding.PaddingRight = UDim.new(0,10)
-
-	pages[name] = page
-
-	btn.MouseButton1Click:Connect(function()
-		for _,p in pairs(pages) do
-			p.Visible = false
-		end
-		page.Visible = true
-	end)
-
-	return page
-end
-
--- CREATE PAGES
-
-local farmPage     = createTab("FARM",20)
-local autoFarmPage = createTab("AUTO FARM",70)
-local statusPage   = createTab("STATUS",120)
-local teleportPage = createTab("TELEPORT",170)
-local espPage      = createTab("ESP",220)
-local respawnPage  = createTab("RESPAWN",270)
-
--- ============================================================
--- AUTO FARM PAGE UI
--- ============================================================
-
-local toggle = Instance.new("TextButton")
-toggle.Parent = autoFarmPage
-toggle.Size = UDim2.new(1,0,0,45)
-toggle.BackgroundColor3 = Color3.fromRGB(60,30,100)
-toggle.Text = ""
-Instance.new("UICorner",toggle)
-
-local check = Instance.new("TextLabel")
-check.Parent = toggle
-check.Size = UDim2.new(0,36,0,36)
-check.Position = UDim2.new(0,6,0.5,-18)
-check.BackgroundColor3 = Color3.fromRGB(35,25,60)
-check.Text = ""
-check.Font = Enum.Font.GothamBold
-check.TextSize = 20
-check.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner",check)
-
-local cookLabel = Instance.new("TextLabel", autoFarmPage)
-cookLabel.Size = UDim2.new(1,0,0,20)
-cookLabel.BackgroundTransparency = 1
-cookLabel.Text = "COOK AMOUNT : "..cookAmount
-cookLabel.Font = Enum.Font.Gotham
-cookLabel.TextSize = 14
-cookLabel.TextColor3 = Color3.fromRGB(210,210,210)
-
-local cookSlider = Instance.new("Frame", autoFarmPage)
-cookSlider.Size = UDim2.new(1,0,0,8)
-cookSlider.BackgroundColor3 = Color3.fromRGB(45,45,45)
-Instance.new("UICorner",cookSlider)
-
-local cookKnob = Instance.new("Frame", cookSlider)
-cookKnob.Size = UDim2.new(0,14,0,14)
-cookKnob.Position = UDim2.new(0,-7,0.5,-7)
-cookKnob.BackgroundColor3 = Color3.fromRGB(170,90,255)
-Instance.new("UICorner",cookKnob)
-
-local draggingCook = false
-
-local function updateCookSlider(x)
-	local pos = math.clamp((x - cookSlider.AbsolutePosition.X) / cookSlider.AbsoluteSize.X, 0, 1)
-	cookKnob.Position = UDim2.new(pos,-7,0.5,-7)
-	cookAmount = math.max(1, math.floor(1 + pos * 49))
-	cookLabel.Text = "COOK AMOUNT : "..cookAmount
-end
-
-cookSlider.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		draggingCook = true
-		updateCookSlider(input.Position.X)
-	end
-end)
-
-UIS.InputChanged:Connect(function(input)
-	if draggingCook and input.UserInputType == Enum.UserInputType.MouseMovement then
-		updateCookSlider(input.Position.X)
-	end
-end)
-
-UIS.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		draggingCook = false
-	end
-end)
-
--- ============================================================
--- ANTI HIT TP + ANTI APPROACH (2-IN-1)
--- ============================================================
-
-local SAFE_POS        = Vector3.new(579.0, 3.5, -539.7)
-local MALL_POS        = Vector3.new(-725.4, 4.8, 587.4)
-local APPROACH_RADIUS = 20
-local antiHitConn     = nil
-local antiApprConn    = nil
-getgenv().ANTI_HIT    = false
-
-local antiHitBtn = Instance.new("TextButton", autoFarmPage)
-antiHitBtn.Size = UDim2.new(1,0,0,32)
-antiHitBtn.Text = "🛡️ ANTI HIT + APPROACH : OFF"
-antiHitBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
-antiHitBtn.TextColor3 = Color3.new(1,1,1)
-antiHitBtn.Font = Enum.Font.GothamBold
-antiHitBtn.TextSize = 14
-Instance.new("UICorner", antiHitBtn)
-
-local antiHitStatus = Instance.new("TextLabel", autoFarmPage)
-antiHitStatus.Size = UDim2.new(1,0,0,20)
-antiHitStatus.BackgroundTransparency = 1
-antiHitStatus.Text = "Status: idle"
-antiHitStatus.Font = Enum.Font.Gotham
-antiHitStatus.TextSize = 13
-antiHitStatus.TextColor3 = Color3.fromRGB(180,180,180)
-
-local function startAntiHit()
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hum then return end
-	antiHitConn = hum.HealthChanged:Connect(function(newHealth)
-		if not getgenv().ANTI_HIT then return end
-		if newHealth < hum.MaxHealth and newHealth > 0 then
-			antiHitStatus.Text = "⚡ Kena hit! TP..."
-			vehicleTeleport(CFrame.new(SAFE_POS))
-		end
-	end)
-end
-
-local function startAntiApproach()
-	antiApprConn = RunService.Heartbeat:Connect(function()
-		if not getgenv().ANTI_HIT then return end
-		local char = player.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
-		for _, plr in pairs(Players:GetPlayers()) do
-			if plr == player then continue end
-			local c = plr.Character
-			local h = c and c:FindFirstChild("HumanoidRootPart")
-			if h then
-				local dist = (hrp.Position - h.Position).Magnitude
-				if dist <= APPROACH_RADIUS then
-					antiHitStatus.Text = "⚠️ " .. plr.Name .. " mendekat! TP mall..."
-					vehicleTeleport(CFrame.new(MALL_POS))
-					task.wait(1)
-					return
-				end
-			end
-		end
-		antiHitStatus.Text = "🛡️ Aktif | Radius: " .. APPROACH_RADIUS
-	end)
-end
-
-local function stopAntiHit()
-	if antiHitConn  then antiHitConn:Disconnect()  antiHitConn  = nil end
-	if antiApprConn then antiApprConn:Disconnect() antiApprConn = nil end
-	antiHitStatus.Text = "Status: idle"
-end
-
-player.CharacterAdded:Connect(function()
-	if getgenv().ANTI_HIT then
-		task.wait(1)
-		startAntiHit()
-		startAntiApproach()
-	end
-end)
-
-antiHitBtn.MouseButton1Click:Connect(function()
-	getgenv().ANTI_HIT = not getgenv().ANTI_HIT
-	if getgenv().ANTI_HIT then
-		startAntiHit()
-		startAntiApproach()
-		antiHitBtn.Text = "🛡️ ANTI HIT + APPROACH : ON"
-		antiHitBtn.BackgroundColor3 = Color3.fromRGB(170,90,255)
-		antiHitStatus.Text = "🛡️ Aktif | Radius: " .. APPROACH_RADIUS
+farmToggleBtn.MouseButton1Click:Connect(function()
+	autoFarmRunning = false
+	autoFarmStopping = true
+	running = not running
+	if running then
+		farmToggleBtn.Text = "⏹  STOP FARM"
+		TweenService:Create(farmToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = C.red}):Play()
+		notify("Farm", "Auto farm dimulai!", "success")
+		task.spawn(cook)
 	else
-		stopAntiHit()
-		antiHitBtn.Text = "🛡️ ANTI HIT + APPROACH : OFF"
-		antiHitBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
+		farmToggleBtn.Text = "▶  START FARM"
+		TweenService:Create(farmToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = C.accentDim}):Play()
+		notify("Farm", "Auto farm dihentikan.", "error")
+	end
+end)
+
+buyNowBtn.MouseButton1Click:Connect(function()
+	task.spawn(autoBuy)
+end)
+
+sellToggleBtn.MouseButton1Click:Connect(function()
+	autoSellEnabled = not autoSellEnabled
+	if autoSellEnabled then
+		sellToggleBtn.Text = "💰  AUTO SELL : ON"
+		TweenService:Create(sellToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = C.accentDim}):Play()
+		notify("Sell", "Auto sell aktif!", "success")
+		task.spawn(autoSell)
+	else
+		sellToggleBtn.Text = "💰  AUTO SELL : OFF"
+		TweenService:Create(sellToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = C.card}):Play()
 	end
 end)
 
 -- ============================================================
--- AUTO FARM LOGIC
+-- AUTO FARM (full v2 logic)
 -- ============================================================
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local function getChar()
-	return player.Character or player.CharacterAdded:Wait()
-end
-
-local function getHumanoid()
-	return getChar():WaitForChild("Humanoid")
-end
-
-local function getHRP()
-	local char = getChar()
-	return char:FindFirstChild("HumanoidRootPart")
-end
-
+local function getChar() return player.Character or player.CharacterAdded:Wait() end
+local function getHumanoid() return getChar():WaitForChild("Humanoid") end
+local function getHRP() return getChar():FindFirstChild("HumanoidRootPart") end
 local buyRemoteV2 = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("StorePurchase")
-
 local farmID = 0
 local storePos = Vector3.new(510.7584,3.5872,600.3163)
 
--- LOADING UI
-
-local loadingGui = Instance.new("ScreenGui", player.PlayerGui)
-loadingGui.IgnoreGuiInset = true
-loadingGui.ResetOnSpawn = false
-
-local bg = Instance.new("Frame", loadingGui)
-bg.Size = UDim2.new(1,0,1,0)
-bg.BackgroundColor3 = Color3.new(0,0,0)
-bg.Visible = false
-
-local loadText = Instance.new("TextLabel", bg)
-loadText.Size = UDim2.new(1,0,0,70)
-loadText.Position = UDim2.new(0,0,0.5,-35)
-loadText.BackgroundTransparency = 1
-loadText.Text = "ELIXIR STORE"
-loadText.TextScaled = true
-loadText.Font = Enum.Font.GothamBlack
-loadText.TextColor3 = Color3.fromRGB(255,255,255)
-
-local loadStroke = Instance.new("UIStroke", loadText)
-loadStroke.Thickness = 3
-loadStroke.Color = Color3.fromRGB(200,120,255)
-
-local function showLoading()
-	bg.Visible = true
-end
-
-local function hideLoading()
-	bg.Visible = false
-end
-
--- FREEZE VEHICLE
-
 local function freezeVehicle(vehicle)
 	if not vehicle or not vehicle.PrimaryPart then return end
-	local part = vehicle.PrimaryPart
-	part.AssemblyLinearVelocity = Vector3.zero
-	part.AssemblyAngularVelocity = Vector3.zero
-	part.Velocity = Vector3.zero
-	part.RotVelocity = Vector3.zero
+	local p = vehicle.PrimaryPart
+	p.AssemblyLinearVelocity = Vector3.zero
+	p.AssemblyAngularVelocity = Vector3.zero
+	p.Velocity = Vector3.zero
+	p.RotVelocity = Vector3.zero
 end
 
--- PRESS E
-
-local function pressE(duration)
-	duration = duration or 0.8
+local function pressE(d)
+	d = d or 0.8
 	vim:SendKeyEvent(true,"E",false,game)
-	task.wait(duration)
+	task.wait(d)
 	vim:SendKeyEvent(false,"E",false,game)
 end
-
--- EQUIP V2
 
 local function equipV2(name)
 	if autoFarmStopping then return end
 	local char = getChar()
 	local tool = player.Backpack:FindFirstChild(name) or char:FindFirstChild(name)
-	if tool then
-		getHumanoid():EquipTool(tool)
-		task.wait(.25)
-		return true
-	end
+	if tool then getHumanoid():EquipTool(tool) task.wait(.25) return true end
 end
-
--- COUNT ITEM V2
 
 local function countItemV2(name)
 	local total = 0
-	for _,v in pairs(player.Backpack:GetChildren()) do
-		if v.Name == name then total += 1 end
-	end
-	for _,v in pairs(getChar():GetChildren()) do
-		if v:IsA("Tool") and v.Name == name then total += 1 end
-	end
+	for _,v in pairs(player.Backpack:GetChildren()) do if v.Name == name then total += 1 end end
+	for _,v in pairs(getChar():GetChildren()) do if v:IsA("Tool") and v.Name == name then total += 1 end end
 	return total
 end
-
--- AUTO BUY V2
 
 local function autoBuyV2()
 	for i = 1, cookAmount do
 		if not autoFarmRunning or autoFarmStopping then break end
-		buyRemoteV2:FireServer("Water")
-		task.wait(0.35)
-		buyRemoteV2:FireServer("Sugar Block Bag")
-		task.wait(0.35)
-		buyRemoteV2:FireServer("Gelatin")
-		task.wait(0.35)
-		buyRemoteV2:FireServer("Empty Bag")
-		task.wait(0.35)
+		buyRemoteV2:FireServer("Water") task.wait(0.35)
+		buyRemoteV2:FireServer("Sugar Block Bag") task.wait(0.35)
+		buyRemoteV2:FireServer("Gelatin") task.wait(0.35)
+		buyRemoteV2:FireServer("Empty Bag") task.wait(0.35)
 	end
 end
-
--- FIND STOVE
 
 local function findStove()
 	local hrp = getHRP()
 	if not hrp then return end
-	local nearest
-	local dist = math.huge
+	local nearest, dist = nil, math.huge
 	for _,v in pairs(workspace:GetDescendants()) do
 		if v:IsA("BasePart") and string.find(v.Name:lower(),"stove") then
 			local d = (v.Position - hrp.Position).Magnitude
-			if d < dist then
-				dist = d
-				nearest = v
-			end
+			if d < dist then dist = d nearest = v end
 		end
 	end
 	return nearest
 end
-
--- MOVE TO STOVE
-
-local function moveToStove(stove)
-	if not stove or autoFarmStopping then return end
-	local hrp = getHRP()
-	if not hrp then return end
-	local seat = getHumanoid().SeatPart
-	if not seat then return end
-	local vehicle = seat:FindFirstAncestorOfClass("Model")
-	if not vehicle or not vehicle.PrimaryPart then return end
-	local dir = (stove.Position - hrp.Position).Unit
-	local targetPos = stove.Position - (dir * 3.5) + Vector3.new(0,1.5,0)
-	local _, y, _ = vehicle.PrimaryPart.CFrame:ToOrientation()
-	local fixedCF = CFrame.new(targetPos) * CFrame.Angles(0, y, 0)
-	vehicle:SetPrimaryPartCFrame(fixedCF)
-	freezeVehicle(vehicle)
-	task.wait(0.4)
-end
-
--- VEHICLE TP
 
 local function vehicleTP(target)
 	if autoFarmStopping then return end
@@ -667,12 +1182,9 @@ local function vehicleTP(target)
 	if not seat then hideLoading() return end
 	local vehicle = seat:FindFirstAncestorOfClass("Model")
 	if not vehicle then hideLoading() return end
-	if not vehicle.PrimaryPart then
-		vehicle.PrimaryPart = seat
-	end
+	if not vehicle.PrimaryPart then vehicle.PrimaryPart = seat end
 	local rot = vehicle.PrimaryPart.CFrame - vehicle.PrimaryPart.Position
-	local safe = target + Vector3.new(0,2,0)
-	vehicle:SetPrimaryPartCFrame(CFrame.new(safe) * rot)
+	vehicle:SetPrimaryPartCFrame(CFrame.new(target + Vector3.new(0,2,0)) * rot)
 	freezeVehicle(vehicle)
 	task.wait(0.25)
 	vehicle:SetPrimaryPartCFrame(CFrame.new(target) * rot)
@@ -681,9 +1193,21 @@ local function vehicleTP(target)
 	hideLoading()
 end
 
--- ============================================================
--- COOK V2
--- ============================================================
+local function moveToStove(stove)
+	if not stove or autoFarmStopping then return end
+	local seat = getHumanoid().SeatPart
+	if not seat then return end
+	local vehicle = seat:FindFirstAncestorOfClass("Model")
+	if not vehicle or not vehicle.PrimaryPart then return end
+	local hrp = getHRP()
+	if not hrp then return end
+	local dir = (stove.Position - hrp.Position).Unit
+	local targetPos = stove.Position - (dir * 3.5) + Vector3.new(0,1.5,0)
+	local _, y, _ = vehicle.PrimaryPart.CFrame:ToOrientation()
+	vehicle:SetPrimaryPartCFrame(CFrame.new(targetPos) * CFrame.Angles(0,y,0))
+	freezeVehicle(vehicle)
+	task.wait(0.4)
+end
 
 local function cookV2()
 	if not autoFarmRunning or autoFarmStopping then return end
@@ -691,49 +1215,23 @@ local function cookV2()
 	moveToStove(stove)
 	for i = 1, cookAmount do
 		if autoFarmStopping then return end
-		if autoFarmRunning and equipV2("Water") then
-			pressE()
-			task.wait(20)
-		end
-		if autoFarmRunning and equipV2("Sugar Block Bag") then
-			task.wait(0.25)
-			pressE(1)
-			task.wait(1.3)
-		end
-		if autoFarmRunning and equipV2("Gelatin") then
-			task.wait(0.25)
-			pressE(1)
-			task.wait(1.3)
-		end
+		if autoFarmRunning and equipV2("Water") then pressE() task.wait(20) end
+		if autoFarmRunning and equipV2("Sugar Block Bag") then task.wait(0.25) pressE(1) task.wait(1.3) end
+		if autoFarmRunning and equipV2("Gelatin") then task.wait(0.25) pressE(1) task.wait(1.3) end
 		task.wait(45)
-		if autoFarmRunning and equipV2("Empty Bag") then
-			pressE()
-			task.wait(1.5)
-		end
+		if autoFarmRunning and equipV2("Empty Bag") then pressE() task.wait(1.5) end
 	end
 end
-
--- AUTO SELL V2
 
 local function autoSellV2()
-	local bags = {
-		"Small Marshmallow Bag",
-		"Medium Marshmallow Bag",
-		"Large Marshmallow Bag"
-	}
+	local bags = {"Small Marshmallow Bag","Medium Marshmallow Bag","Large Marshmallow Bag"}
 	for _,bag in pairs(bags) do
 		while autoFarmRunning and not autoFarmStopping and countItemV2(bag) > 0 do
-			if equipV2(bag) then
-				pressE()
-				task.wait(0.8)
-			else
-				break
-			end
+			if equipV2(bag) then pressE() task.wait(0.8)
+			else break end
 		end
 	end
 end
-
--- FARM LOOP
 
 local function farmLoop(id)
 	local hrp = getHRP()
@@ -754,608 +1252,215 @@ local function farmLoop(id)
 	end
 end
 
--- TOGGLE AUTO FARM
-
-toggle.MouseButton1Click:Connect(function()
+autoFarmToggle.MouseButton1Click:Connect(function()
 	autoFarmRunning = not autoFarmRunning
 	if autoFarmRunning then
 		farmID += 1
 		local currentID = farmID
 		autoFarmStopping = false
-		check.Text = "✓"
-		check.BackgroundColor3 = Color3.fromRGB(170,90,255)
-		task.spawn(function()
-			farmLoop(currentID)
-		end)
+		notify("Auto Farm", "Loop dimulai!", "success")
+		task.spawn(function() farmLoop(currentID) end)
 	else
 		autoFarmRunning = false
 		autoFarmStopping = true
-		check.Text = ""
-		check.BackgroundColor3 = Color3.fromRGB(35,25,60)
+		notify("Auto Farm", "Loop dihentikan.", "error")
 	end
 end)
 
 -- ============================================================
--- ESP PAGE
+-- ANTI HIT + APPROACH LOGIC
 -- ============================================================
+local SAFE_POS = Vector3.new(579.0, 3.5, -539.7)
+local MALL_POS = Vector3.new(-725.4, 4.8, 587.4)
+local APPROACH_RADIUS = 20
+local antiHitConn, antiApprConn
+getgenv().ANTI_HIT = false
 
-local MaxDistance = 500
-
-local distLabel = Instance.new("TextLabel",espPage)
-distLabel.Size = UDim2.new(1,0,0,20)
-distLabel.BackgroundTransparency = 1
-distLabel.Text = "ESP DISTANCE : "..MaxDistance
-distLabel.Font = Enum.Font.Gotham
-distLabel.TextSize = 14
-distLabel.TextColor3 = Color3.fromRGB(210,210,210)
-
-local distSlider = Instance.new("Frame",espPage)
-distSlider.Size = UDim2.new(1,0,0,8)
-distSlider.BackgroundColor3 = Color3.fromRGB(45,45,45)
-Instance.new("UICorner",distSlider)
-
-local distKnob = Instance.new("Frame",distSlider)
-distKnob.Size = UDim2.new(0,14,0,14)
-distKnob.Position = UDim2.new(1,-7,0.5,-7)
-distKnob.BackgroundColor3 = accent
-Instance.new("UICorner",distKnob)
-
-local draggingDist = false
-
-local function updateDistSlider(x)
-	local pos = math.clamp((x-distSlider.AbsolutePosition.X)/distSlider.AbsoluteSize.X,0,1)
-	distKnob.Position = UDim2.new(pos,-7,0.5,-7)
-	MaxDistance = math.floor(50 + pos * 7950)
-	distLabel.Text = "ESP DISTANCE : "..MaxDistance
-end
-
-distSlider.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		draggingDist = true
-		updateDistSlider(input.Position.X)
-	end
-end)
-
-UIS.InputChanged:Connect(function(input)
-	if draggingDist and input.UserInputType == Enum.UserInputType.MouseMovement then
-		updateDistSlider(input.Position.X)
-	end
-end)
-
-UIS.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		draggingDist = false
-	end
-end)
-
-local espBtn = Instance.new("TextButton",espPage)
-
-local nameBtn = Instance.new("TextButton",espPage)
-nameBtn.Size = UDim2.new(1,0,0,32)
-nameBtn.Text = "NAME : ON"
-nameBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
-nameBtn.TextColor3 = Color3.new(1,1,1)
-nameBtn.Font = Enum.Font.GothamBold
-nameBtn.TextSize = 14
-Instance.new("UICorner",nameBtn)
-
-nameBtn.MouseButton1Click:Connect(function()
-	ShowName = not ShowName
-	nameBtn.Text = ShowName and "NAME : ON" or "NAME : OFF"
-end)
-
-local healthBtn = Instance.new("TextButton",espPage)
-healthBtn.Size = UDim2.new(1,0,0,32)
-healthBtn.Text = "HEALTH BAR : ON"
-healthBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
-healthBtn.TextColor3 = Color3.new(1,1,1)
-healthBtn.Font = Enum.Font.GothamBold
-healthBtn.TextSize = 14
-Instance.new("UICorner",healthBtn)
-
-healthBtn.MouseButton1Click:Connect(function()
-	ShowHealth = not ShowHealth
-	healthBtn.Text = ShowHealth and "HEALTH BAR : ON" or "HEALTH BAR : OFF"
-end)
-
-local distBtn = Instance.new("TextButton",espPage)
-distBtn.Size = UDim2.new(1,0,0,32)
-distBtn.Text = "DISTANCE : ON"
-distBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
-distBtn.TextColor3 = Color3.new(1,1,1)
-distBtn.Font = Enum.Font.GothamBold
-distBtn.TextSize = 14
-Instance.new("UICorner",distBtn)
-
-distBtn.MouseButton1Click:Connect(function()
-	ShowDistance = not ShowDistance
-	distBtn.Text = ShowDistance and "DISTANCE : ON" or "DISTANCE : OFF"
-end)
-
-espBtn.Size = UDim2.new(1,0,0,32)
-espBtn.Text = "ESP : OFF"
-espBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
-espBtn.TextColor3 = Color3.new(1,1,1)
-espBtn.Font = Enum.Font.GothamBold
-espBtn.TextSize = 14
-Instance.new("UICorner",espBtn)
-
-espBtn.MouseButton1Click:Connect(function()
-	Enabled = not Enabled
-	espBtn.Text = Enabled and "ESP : ON" or "ESP : OFF"
-end)
-
--- ============================================================
--- FARM PAGE
--- ============================================================
-
-farmPage.Visible = true
-
-statusLabel = Instance.new("TextLabel",farmPage)
-statusLabel.Size = UDim2.new(1,0,0,24)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "Status : STOPPED"
-statusLabel.Font = Enum.Font.GothamSemibold
-statusLabel.TextSize = 14
-statusLabel.TextColor3 = Color3.fromRGB(220,220,220)
-statusLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-local function createRow(text)
-	local row = Instance.new("Frame",farmPage)
-	row.Size = UDim2.new(1,0,0,26)
-	row.BackgroundTransparency = 1
-
-	local label = Instance.new("TextLabel",row)
-	label.Size = UDim2.new(0.45,0,1,0)
-	label.BackgroundTransparency = 1
-	label.Text = text
-	label.Font = Enum.Font.GothamMedium
-	label.TextSize = 14
-	label.TextColor3 = Color3.fromRGB(210,210,210)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-
-	local bg = Instance.new("Frame",row)
-	bg.Position = UDim2.new(0.52,0,0.5,-4)
-	bg.Size = UDim2.new(0.46,0,0,8)
-	bg.BackgroundColor3 = Color3.fromRGB(45,45,45)
-	Instance.new("UICorner",bg)
-
-	local bar = Instance.new("Frame",bg)
-	bar.Size = UDim2.new(0,0,1,0)
-	bar.BackgroundColor3 = accent
-	Instance.new("UICorner",bar)
-
-	return label,bar
-end
-
-waterLabel,waterBar = createRow("💧 Water : 0")
-sugarLabel,sugarBar = createRow("🧊 Sugar : 0")
-gelatinLabel,gelatinBar = createRow("🧪 Gelatin : 0")
-bagLabel,bagBar = createRow("📦 Bag : 0")
-
--- BUY SLIDER
-
-local buyLabel = Instance.new("TextLabel",farmPage)
-buyLabel.Size = UDim2.new(1,0,0,22)
-buyLabel.BackgroundTransparency = 1
-buyLabel.Text = "BUY AMOUNT : 1"
-buyLabel.Font = Enum.Font.Gotham
-buyLabel.TextSize = 14
-buyLabel.TextColor3 = Color3.fromRGB(210,210,210)
-
-local slider = Instance.new("Frame",farmPage)
-slider.Size = UDim2.new(1,0,0,8)
-slider.BackgroundColor3 = Color3.fromRGB(45,45,45)
-Instance.new("UICorner",slider)
-
-local knob = Instance.new("Frame",slider)
-knob.Size = UDim2.new(0,14,0,14)
-knob.Position = UDim2.new(0,-7,0.5,-7)
-knob.BackgroundColor3 = accent
-Instance.new("UICorner",knob)
-
-local dragging = false
-
-local function updateSlider(x)
-	local pos = math.clamp((x-slider.AbsolutePosition.X)/slider.AbsoluteSize.X,0,1)
-	knob.Position = UDim2.new(pos,-7,0.5,-7)
-	buyAmount = math.floor(1 + pos * 24)
-	buyLabel.Text = "BUY AMOUNT : "..buyAmount
-end
-
-slider.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		updateSlider(input.Position.X)
-	end
-end)
-
-UIS.InputChanged:Connect(function(input)
-	if dragging and (
-		input.UserInputType == Enum.UserInputType.MouseMovement
-		or input.UserInputType == Enum.UserInputType.Touch
-	) then
-		updateSlider(input.Position.X)
-	end
-end)
-
-UIS.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = false
-	end
-end)
-
--- FARM BUTTONS
-
-local toggleBtn = Instance.new("TextButton",farmPage)
-toggleBtn.Size = UDim2.new(1,0,0,32)
-toggleBtn.Text = "AUTO FARM"
-toggleBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
-toggleBtn.TextColor3 = Color3.new(1,1,1)
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 14
-Instance.new("UICorner",toggleBtn)
-
-local sellBtn = Instance.new("TextButton",farmPage)
-sellBtn.Size = UDim2.new(1,0,0,32)
-sellBtn.Text = "AUTO SELL : OFF"
-sellBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
-sellBtn.TextColor3 = Color3.new(1,1,1)
-sellBtn.Font = Enum.Font.GothamBold
-sellBtn.TextSize = 14
-Instance.new("UICorner",sellBtn)
-
-local buyBtn = Instance.new("TextButton",farmPage)
-buyBtn.Size = UDim2.new(1,0,0,32)
-buyBtn.Text = "AUTO BUY"
-buyBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
-buyBtn.TextColor3 = Color3.new(1,1,1)
-buyBtn.Font = Enum.Font.GothamBold
-buyBtn.TextSize = 14
-Instance.new("UICorner",buyBtn)
-
-toggleBtn.MouseButton1Click:Connect(function()
-	autoFarmRunning = false
-	autoFarmStopping = true
-	running = not running
-	if running then
-		toggleBtn.Text = "STOP FARM"
-		toggleBtn.BackgroundColor3 = Color3.fromRGB(170,90,255)
-		task.spawn(cook)
-	else
-		toggleBtn.Text = "START FARM"
-		toggleBtn.BackgroundColor3 = Color3.fromRGB(55,35,85)
-	end
-end)
-
-buyBtn.MouseButton1Click:Connect(function()
-	task.spawn(autoBuy)
-end)
-
-sellBtn.MouseButton1Click:Connect(function()
-	autoSellEnabled = not autoSellEnabled
-	if autoSellEnabled then
-		sellBtn.Text = "AUTO SELL : ON"
-		task.spawn(autoSell)
-	else
-		sellBtn.Text = "AUTO SELL : OFF"
-	end
-end)
-
--- ============================================================
--- STATUS PAGE
--- ============================================================
-
-local grid = Instance.new("UIGridLayout",statusPage)
-grid.CellSize = UDim2.new(0.48,0,0,60)
-grid.CellPadding = UDim2.new(0.04,0,0,8)
-
-smallLabel,smallCard = createCard("🍬 Small")
-mediumLabel,mediumCard = createCard("🍬 Medium")
-largeLabel,largeCard = createCard("🍬 Large")
-waterStatus,waterCard = createCard("💧 Water")
-sugarStatus,sugarCard = createCard("🧊 Sugar")
-gelatinStatus,gelatinCard = createCard("🧪 Gelatin")
-bagStatus,bagCard = createCard("📦 Bag")
-
-smallCard.Parent = statusPage
-mediumCard.Parent = statusPage
-largeCard.Parent = statusPage
-waterCard.Parent = statusPage
-sugarCard.Parent = statusPage
-gelatinCard.Parent = statusPage
-bagCard.Parent = statusPage
-
-local avatarFrame = Instance.new("Frame")
-avatarFrame.Parent = statusPage
-avatarFrame.Size = UDim2.new(1,0,0,70)
-avatarFrame.BackgroundTransparency = 1
-
-local avatar = Instance.new("ImageLabel",avatarFrame)
-avatar.Size = UDim2.new(0,60,0,60)
-avatar.Position = UDim2.new(0,0,0,0)
-avatar.BackgroundTransparency = 1
-
-local username = Instance.new("TextLabel",avatarFrame)
-username.Position = UDim2.new(0,70,0,20)
-username.Size = UDim2.new(1,-70,0,20)
-username.BackgroundTransparency = 1
-username.Font = Enum.Font.GothamBold
-username.TextSize = 16
-username.TextColor3 = Color3.new(1,1,1)
-username.TextXAlignment = Enum.TextXAlignment.Left
-username.Text = player.Name
-
-local avatarImg, _ = Players:GetUserThumbnailAsync(
-	player.UserId,
-	Enum.ThumbnailType.HeadShot,
-	Enum.ThumbnailSize.Size100x100
-)
-avatar.Image = avatarImg
-
--- STATUS LOOP
-
-local function startStatusLoop()
-	task.spawn(function()
-		while gui and gui.Parent do
-			if waterLabel then waterLabel.Text = "💧 Water : "..countItem("Water") end
-			if sugarLabel then sugarLabel.Text = "🧊 Sugar : "..countItem("Sugar Block Bag") end
-			if gelatinLabel then gelatinLabel.Text = "🧪 Gelatin : "..countItem("Gelatin") end
-			if bagLabel then bagLabel.Text = "📦 Bag : "..countItem("Empty Bag") end
-
-			local small = countItem("Small Marshmallow Bag")
-			local medium = countItem("Medium Marshmallow Bag")
-			local large = countItem("Large Marshmallow Bag")
-			local total = small + medium + large
-
-			if smallLabel then smallLabel.Text = small end
-			if mediumLabel then mediumLabel.Text = medium end
-			if largeLabel then largeLabel.Text = large end
-			if totalLabel then totalLabel.Text = "Total : "..total end
-
-			if waterStatus then waterStatus.Text = countItem("Water") end
-			if sugarStatus then sugarStatus.Text = countItem("Sugar Block Bag") end
-			if gelatinStatus then gelatinStatus.Text = countItem("Gelatin") end
-			if bagStatus then bagStatus.Text = countItem("Empty Bag") end
-
-			task.wait(.5)
+local function startAntiHit()
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+	antiHitConn = hum.HealthChanged:Connect(function(newHealth)
+		if not getgenv().ANTI_HIT then return end
+		if newHealth < hum.MaxHealth and newHealth > 0 then
+			antiStatusLbl.Text = "⚡  Kena hit! TP..."
+			vehicleTeleport(CFrame.new(SAFE_POS))
 		end
 	end)
 end
 
-startStatusLoop()
-
--- ============================================================
--- TELEPORT PAGE
--- ============================================================
-
-local apart1 = CFrame.new(1140.319091796875,10.105062484741211,450.2520446777344)*CFrame.new(0,2,0)
-local apart2 = CFrame.new(1141.39099,10.1050625,422.805542)*CFrame.new(0,2,0)
-local apart3 = CFrame.new(986.987305,10.1050644,248.435837)*CFrame.new(0,2,0)
-local apart4 = CFrame.new(986.299194,10.1050644,219.940186)*CFrame.new(0,2,0)
-local apart5 = CFrame.new(924.781006,10.1050644,41.1367264)*CFrame.Angles(0,math.rad(90),0)
-local apart6 = CFrame.new(896.671997,10.1050644,40.6403999)*CFrame.Angles(0,math.rad(90),0)
-
-local csn1 = CFrame.new(1178.8331298828125,3.95,-227.3722381591797)
-local csn2 = CFrame.new(1205.0880126953125,3.95,-220.54200744628906)
-local csn3 = CFrame.new(1204.281005859375,3.7122225761413574,-182.851318359375)
-local csn4 = CFrame.new(1178.5850830078125,3.712223529815674,-189.7107696533203)
-
-local function addTeleportButton(text,callback)
-	local btn = Instance.new("TextButton",teleportPage)
-	btn.Size = UDim2.new(1,0,0,32)
-	btn.Text = text
-	btn.BackgroundColor3 = Color3.fromRGB(55,35,85)
-	btn.TextColor3 = Color3.new(1,1,1)
-	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 14
-	Instance.new("UICorner",btn)
-	btn.MouseButton1Click:Connect(callback)
-end
-
-addTeleportButton("Teleport NPC", function()
-	if statusLabel then statusLabel.Text = "Teleport NPC..." end
-	vehicleTeleport(npcPos)
-	if statusLabel then statusLabel.Text = "Arrived NPC" end
-end)
-
-addTeleportButton("Teleport Tier", function()
-	if statusLabel then statusLabel.Text = "Teleport Tier..." end
-	vehicleTeleport(tierPos)
-	if statusLabel then statusLabel.Text = "Arrived Tier" end
-end)
-
-addTeleportButton("Apart 1", function() vehicleTeleport(apart1) end)
-addTeleportButton("Apart 2", function() vehicleTeleport(apart2) end)
-addTeleportButton("Apart 3", function() vehicleTeleport(apart3) end)
-addTeleportButton("Apart 4", function() vehicleTeleport(apart4) end)
-addTeleportButton("Apart 5", function() vehicleTeleport(apart5) end)
-addTeleportButton("Apart 6", function() vehicleTeleport(apart6) end)
-
-addTeleportButton("CSN 1", function() vehicleTeleport(csn1) end)
-addTeleportButton("CSN 2", function() vehicleTeleport(csn2) end)
-addTeleportButton("CSN 3", function() vehicleTeleport(csn3) end)
-addTeleportButton("CSN 4", function() vehicleTeleport(csn4) end)
-
--- ============================================================
--- RESPAWN PAGE
--- ============================================================
-
-local selectedSpawn = nil
-
-local respawnStatus = Instance.new("TextLabel", respawnPage)
-respawnStatus.Size = UDim2.new(1,0,0,24)
-respawnStatus.BackgroundTransparency = 1
-respawnStatus.Text = "📍 Spawn: belum dipilih"
-respawnStatus.Font = Enum.Font.GothamSemibold
-respawnStatus.TextSize = 14
-respawnStatus.TextColor3 = Color3.fromRGB(220,220,220)
-respawnStatus.TextXAlignment = Enum.TextXAlignment.Left
-
-local function makeSpawnBtn(name, pos)
-	local b = Instance.new("TextButton", respawnPage)
-	b.Size = UDim2.new(1,0,0,32)
-	b.Text = "📍 "..name
-	b.BackgroundColor3 = Color3.fromRGB(55,35,85)
-	b.TextColor3 = Color3.new(1,1,1)
-	b.Font = Enum.Font.GothamBold
-	b.TextSize = 14
-	Instance.new("UICorner", b)
-	b.MouseButton1Click:Connect(function()
-		selectedSpawn = pos
-		for _,v in pairs(respawnPage:GetChildren()) do
-			if v:IsA("TextButton") then
-				v.BackgroundColor3 = Color3.fromRGB(55,35,85)
+local function startAntiApproach()
+	antiApprConn = RunService.Heartbeat:Connect(function()
+		if not getgenv().ANTI_HIT then return end
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		for _, plr in pairs(Players:GetPlayers()) do
+			if plr == player then continue end
+			local c = plr.Character
+			local h = c and c:FindFirstChild("HumanoidRootPart")
+			if h then
+				local d = (hrp.Position - h.Position).Magnitude
+				if d <= APPROACH_RADIUS then
+					antiStatusLbl.Text = "⚠️  " .. plr.Name .. " mendekat!"
+					vehicleTeleport(CFrame.new(MALL_POS))
+					task.wait(1)
+					return
+				end
 			end
 		end
-		b.BackgroundColor3 = Color3.fromRGB(40,170,90)
-		respawnStatus.Text = "📍 Spawn: "..name
+		antiStatusLbl.Text = "🛡️  Aktif | Radius: " .. APPROACH_RADIUS
 	end)
 end
 
-makeSpawnBtn("🚀 Dealer",     Vector3.new(511,3,601))
-makeSpawnBtn("🏥 RS 1",       Vector3.new(1140.8,10.1,451.8))
-makeSpawnBtn("🏥 RS 2",       Vector3.new(1141.2,10.1,423.2))
-makeSpawnBtn("🏠 Tier 1",     Vector3.new(985.9,10.1,247))
-makeSpawnBtn("🏠 Tier 2",     Vector3.new(989.3,11.0,228.3))
-makeSpawnBtn("🗑️ Trash 1",    Vector3.new(890.9,10.1,44.3))
-makeSpawnBtn("🗑️ Trash 2",    Vector3.new(920.4,10.1,46.3))
-makeSpawnBtn("🚗 Dealership", Vector3.new(733.5,4.6,431.9))
-makeSpawnBtn("🔫 GS Ujung",   Vector3.new(-467.1,4.8,353.5))
-makeSpawnBtn("🔫 GS Mid",     Vector3.new(218.7,3.7,-176.2))
+local function stopAntiHit()
+	if antiHitConn then antiHitConn:Disconnect() antiHitConn = nil end
+	if antiApprConn then antiApprConn:Disconnect() antiApprConn = nil end
+	antiStatusLbl.Text = "🛡️  Idle"
+end
 
-local respawnNowBtn = Instance.new("TextButton", respawnPage)
-respawnNowBtn.Size = UDim2.new(1,0,0,36)
-respawnNowBtn.Text = "🔄 RESPAWN SEKARANG"
-respawnNowBtn.BackgroundColor3 = Color3.fromRGB(170,90,255)
-respawnNowBtn.TextColor3 = Color3.new(1,1,1)
-respawnNowBtn.Font = Enum.Font.GothamBold
-respawnNowBtn.TextSize = 15
-Instance.new("UICorner", respawnNowBtn)
+player.CharacterAdded:Connect(function()
+	if getgenv().ANTI_HIT then
+		task.wait(1)
+		startAntiHit()
+		startAntiApproach()
+	end
+end)
 
-respawnNowBtn.MouseButton1Click:Connect(function()
-	if not selectedSpawn then
-		respawnStatus.Text = "⚠️ Pilih spawn dulu!"
-		return
+antiHitToggle.MouseButton1Click:Connect(function()
+	getgenv().ANTI_HIT = not getgenv().ANTI_HIT
+	if getgenv().ANTI_HIT then
+		startAntiHit()
+		startAntiApproach()
+		notify("Protection", "Anti Hit + Approach aktif!", "success")
+	else
+		stopAntiHit()
+		notify("Protection", "Protection dimatikan.", "error")
 	end
-	local char = player.Character
-	local hum = char and char:FindFirstChildOfClass("Humanoid")
-	if not hum then return end
-	respawnStatus.Text = "💀 Respawning..."
-	local StarterGui = game:GetService("StarterGui")
-	-- MATIIN COREGUI DULU, TUNGGU BENTAR BARU MATI
-	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
-	loadText.Text = "RESPAWNING..."
-	showLoading()
-	task.wait(0.3) -- kasih waktu CoreGui buat keapply
-	hum.Health = 0
-	task.wait(0.2)
-	player.CharacterAdded:Wait()
-	task.wait(1)
-	local newChar = player.Character
-	local hrp = newChar and newChar:FindFirstChild("HumanoidRootPart")
-	if hrp then
-		hrp.CFrame = CFrame.new(selectedSpawn)
-		task.wait(0.3)
-	end
-	hideLoading()
-	loadText.Text = "ELIXIR STORE"
-	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true)
-	respawnStatus.Text = "✅ Respawn berhasil!"
 end)
 
 -- ============================================================
--- MOBILE HIDE BUTTON
+-- STATUS LOOP
 -- ============================================================
+task.spawn(function()
+	while gui and gui.Parent do
+		local w  = countItem("Water")
+		local sg = countItem("Sugar Block Bag")
+		local ge = countItem("Gelatin")
+		local bg = countItem("Empty Bag")
+		local sm = countItem("Small Marshmallow Bag")
+		local md = countItem("Medium Marshmallow Bag")
+		local lg = countItem("Large Marshmallow Bag")
 
-local hideBtn = Instance.new("TextButton",gui)
-hideBtn.Size = UDim2.new(0,50,0,50)
-hideBtn.Position = UDim2.new(1,-60,0.5,-25)
-hideBtn.Text = "UI"
-hideBtn.Font = Enum.Font.GothamBold
-hideBtn.TextSize = 14
-hideBtn.BackgroundColor3 = accent
-hideBtn.TextColor3 = Color3.new(1,1,1)
-hideBtn.Active = true
-hideBtn.Draggable = true
-Instance.new("UICorner",hideBtn)
+		if waterVal    then waterVal.Text    = tostring(w)  end
+		if sugarVal    then sugarVal.Text    = tostring(sg) end
+		if gelatinVal  then gelatinVal.Text  = tostring(ge) end
+		if bagVal      then bagVal.Text      = tostring(bg) end
+		if statWaterVal   then statWaterVal.Text   = tostring(w)  end
+		if statSugarVal   then statSugarVal.Text   = tostring(sg) end
+		if statGelatinVal then statGelatinVal.Text = tostring(ge) end
+		if statBagVal     then statBagVal.Text     = tostring(bg) end
+		if statSmallVal   then statSmallVal.Text   = tostring(sm) end
+		if statMedVal     then statMedVal.Text     = tostring(md) end
+		if statLargeVal   then statLargeVal.Text   = tostring(lg) end
+		if totalVal       then totalVal.Text        = tostring(sm+md+lg) end
 
-hideBtn.MouseButton1Click:Connect(function()
+		task.wait(0.5)
+	end
+end)
+
+-- ============================================================
+-- MINIMIZE BUTTON
+-- ============================================================
+local bodyVisible = true
+local bodyFrame = Instance.new("Frame", main)
+bodyFrame.Size = UDim2.new(1, 0, 1, -48)
+bodyFrame.Position = UDim2.new(0, 0, 0, 48)
+bodyFrame.BackgroundTransparency = 1
+
+minBtn.MouseButton1Click:Connect(function()
+	bodyVisible = not bodyVisible
+	sidebar.Visible = bodyVisible
+	content.Visible = bodyVisible
+	if bodyVisible then
+		TweenService:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 680, 0, 440)}):Play()
+	else
+		TweenService:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 680, 0, 48)}):Play()
+	end
+end)
+
+-- ============================================================
+-- HIDE BUTTON (MOBILE)
+-- ============================================================
+local hideBtn2 = Instance.new("TextButton", gui)
+hideBtn2.Size = UDim2.new(0, 44, 0, 44)
+hideBtn2.Position = UDim2.new(1, -54, 0.5, -22)
+hideBtn2.Text = "E"
+hideBtn2.Font = Enum.Font.GothamBlack
+hideBtn2.TextSize = 16
+hideBtn2.BackgroundColor3 = C.accent
+hideBtn2.TextColor3 = Color3.new(1,1,1)
+hideBtn2.Active = true
+hideBtn2.Draggable = true
+hideBtn2.BorderSizePixel = 0
+Instance.new("UICorner", hideBtn2).CornerRadius = UDim.new(0, 12)
+
+hideBtn2.MouseButton1Click:Connect(function()
 	main.Visible = not main.Visible
 end)
 
-ContextActionService:BindAction(
-	"toggleUI",
-	function(_,state)
-		if state == Enum.UserInputState.Begin then
-			main.Visible = not main.Visible
-		end
-	end,
-	false,
-	Enum.KeyCode.P
-)
+ContextActionService:BindAction("toggleUI_v2", function(_, state)
+	if state == Enum.UserInputState.Begin then
+		main.Visible = not main.Visible
+	end
+end, false, Enum.KeyCode.P)
 
 -- ============================================================
 -- ESP SYSTEM
 -- ============================================================
-
-repeat task.wait() until game.Players.LocalPlayer.Character
-
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
-
-local ESP = {}
-Enabled = false
-ShowName = true
-ShowHealth = true
-ShowDistance = true
-
-local PURPLE = Color3.fromRGB(170,90,255)
+local ESP_DATA = {}
+local PURPLE_ESP = Color3.fromRGB(148, 75, 255)
 
 local function createESP(p)
 	local box = {}
 	for i = 1,8 do
 		local line = Drawing.new("Line")
-		line.Thickness = 3
-		line.Color = PURPLE
+		line.Thickness = 2
+		line.Color = PURPLE_ESP
 		line.Visible = false
-		table.insert(box,line)
+		table.insert(box, line)
 	end
-	local name = Drawing.new("Text")
-	name.Size = 14
-	name.Center = true
-	name.Outline = true
-	name.Color = Color3.new(1,1,1)
-	name.Visible = false
-	local health = Drawing.new("Line")
-	health.Thickness = 4
-	health.Visible = false
-	ESP[p] = { box = box, name = name, health = health }
+	local name2 = Drawing.new("Text")
+	name2.Size = 13
+	name2.Center = true
+	name2.Outline = true
+	name2.Color = Color3.new(1,1,1)
+	name2.Visible = false
+	local health2 = Drawing.new("Line")
+	health2.Thickness = 3
+	health2.Visible = false
+	ESP_DATA[p] = {box = box, name = name2, health = health2}
 end
 
 local function removeESP(p)
-	if ESP[p] then
-		for _,l in pairs(ESP[p].box) do l:Remove() end
-		ESP[p].name:Remove()
-		ESP[p].health:Remove()
-		ESP[p] = nil
+	if ESP_DATA[p] then
+		for _,l in pairs(ESP_DATA[p].box) do l:Remove() end
+		ESP_DATA[p].name:Remove()
+		ESP_DATA[p].health:Remove()
+		ESP_DATA[p] = nil
 	end
 end
 
 for _,p in pairs(Players:GetPlayers()) do
 	if p ~= LocalPlayer then createESP(p) end
 end
-
-Players.PlayerAdded:Connect(function(p)
-	if p ~= LocalPlayer then createESP(p) end
-end)
-
+Players.PlayerAdded:Connect(function(p) if p ~= LocalPlayer then createESP(p) end end)
 Players.PlayerRemoving:Connect(removeESP)
 
 RunService.RenderStepped:Connect(function()
-	for p,data in pairs(ESP) do
+	for p, data in pairs(ESP_DATA) do
 		if not Enabled then
 			for _,l in pairs(data.box) do l.Visible = false end
 			data.name.Visible = false
@@ -1367,40 +1472,31 @@ RunService.RenderStepped:Connect(function()
 		local hrp = char:FindFirstChild("HumanoidRootPart")
 		local hum = char:FindFirstChild("Humanoid")
 		if not hrp or not hum then continue end
-		local pos,visible = Camera:WorldToViewportPoint(hrp.Position)
+		local pos, visible = Camera:WorldToViewportPoint(hrp.Position)
 		if visible then
-			local scale =
-				Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0,3,0)).Y -
-				Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0,3,0)).Y
-			local width = scale*0.6
-			local height = scale*1.2
-			local x = pos.X
-			local y = pos.Y
-			local left = x - width/2
-			local right = x + width/2
-			local top = y - height/2
-			local bottom = y + height/2
-			local corner = width/4
-
-			local function draw(lines)
-				lines[1].From = Vector2.new(left,top); lines[1].To = Vector2.new(left+corner,top)
-				lines[2].From = Vector2.new(left,top); lines[2].To = Vector2.new(left,top+corner)
-				lines[3].From = Vector2.new(right,top); lines[3].To = Vector2.new(right-corner,top)
-				lines[4].From = Vector2.new(right,top); lines[4].To = Vector2.new(right,top+corner)
-				lines[5].From = Vector2.new(left,bottom); lines[5].To = Vector2.new(left+corner,bottom)
-				lines[6].From = Vector2.new(left,bottom); lines[6].To = Vector2.new(left,bottom-corner)
-				lines[7].From = Vector2.new(right,bottom); lines[7].To = Vector2.new(right-corner,bottom)
-				lines[8].From = Vector2.new(right,bottom); lines[8].To = Vector2.new(right,bottom-corner)
-				for _,l in pairs(lines) do l.Visible = true end
-			end
-
-			draw(data.box)
+			local scale = Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0,3,0)).Y - Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0,3,0)).Y
+			local width = scale * 0.6
+			local height = scale * 1.2
+			local x, y = pos.X, pos.Y
+			local left, right = x - width/2, x + width/2
+			local top2, bottom = y - height/2, y + height/2
+			local corner2 = width/4
+			local lines = data.box
+			lines[1].From = Vector2.new(left,top2); lines[1].To = Vector2.new(left+corner2,top2)
+			lines[2].From = Vector2.new(left,top2); lines[2].To = Vector2.new(left,top2+corner2)
+			lines[3].From = Vector2.new(right,top2); lines[3].To = Vector2.new(right-corner2,top2)
+			lines[4].From = Vector2.new(right,top2); lines[4].To = Vector2.new(right,top2+corner2)
+			lines[5].From = Vector2.new(left,bottom); lines[5].To = Vector2.new(left+corner2,bottom)
+			lines[6].From = Vector2.new(left,bottom); lines[6].To = Vector2.new(left,bottom-corner2)
+			lines[7].From = Vector2.new(right,bottom); lines[7].To = Vector2.new(right-corner2,bottom)
+			lines[8].From = Vector2.new(right,bottom); lines[8].To = Vector2.new(right,bottom-corner2)
+			for _,l in pairs(lines) do l.Visible = true end
 
 			local lp = LocalPlayer.Character
 			if not lp or not lp:FindFirstChild("HumanoidRootPart") then continue end
-			local distance = math.floor((lp.HumanoidRootPart.Position - hrp.Position).Magnitude)
+			local distance2 = math.floor((lp.HumanoidRootPart.Position - hrp.Position).Magnitude)
 
-			if distance > MaxDistance then
+			if distance2 > MaxDistance then
 				for _,l in pairs(data.box) do l.Visible = false end
 				data.name.Visible = false
 				data.health.Visible = false
@@ -1408,19 +1504,17 @@ RunService.RenderStepped:Connect(function()
 			end
 
 			if ShowName then
-				data.name.Text = ShowDistance and (p.Name.." ["..distance.."]") or p.Name
-				data.name.Position = Vector2.new(x,top-16)
+				data.name.Text = ShowDistance and (p.Name .. " [" .. distance2 .. "]") or p.Name
+				data.name.Position = Vector2.new(x, top2 - 15)
 				data.name.Visible = true
 			else
 				data.name.Visible = false
 			end
 
-			local hpPercent = hum.MaxHealth > 0 and math.clamp(hum.Health/hum.MaxHealth,0,1) or 0
-			local barWidth = width - 4
-			local barY = bottom - 3
-			data.health.From = Vector2.new(left+2,barY)
-			data.health.To = Vector2.new(left+2+(barWidth*hpPercent),barY)
-			data.health.Color = Color3.fromRGB(255*(1-hpPercent),255*hpPercent,0)
+			local hpPct = hum.MaxHealth > 0 and math.clamp(hum.Health/hum.MaxHealth, 0, 1) or 0
+			data.health.From = Vector2.new(left+2, bottom-3)
+			data.health.To = Vector2.new(left+2+((width-4)*hpPct), bottom-3)
+			data.health.Color = Color3.fromRGB(255*(1-hpPct), 255*hpPct, 0)
 			data.health.Visible = ShowHealth
 		else
 			for _,l in pairs(data.box) do l.Visible = false end
@@ -1429,3 +1523,10 @@ RunService.RenderStepped:Connect(function()
 		end
 	end
 end)
+
+-- ============================================================
+-- STARTUP
+-- ============================================================
+switchTab("FARM")
+task.wait(0.5)
+notify("ELIXIR 3.5", "Script berhasil diload!", "success")
