@@ -558,79 +558,94 @@ local function makeActionBtn(parent, text, color, order)
 end
 
 local function makeSlider(parent, labelText, minV, maxV, defaultV, order, callback)
-	local wrap = card(parent, 56, order)
-	local lbl = Instance.new("TextLabel", wrap)
-	lbl.Position = UDim2.new(0, 12, 0, 8)
-	lbl.Size = UDim2.new(1, -80, 0, 18)
-	lbl.BackgroundTransparency = 1
-	lbl.Text = labelText
-	lbl.Font = Enum.Font.GothamSemibold
-	lbl.TextSize = 12
-	lbl.TextColor3 = C.textMid
-	lbl.TextXAlignment = Enum.TextXAlignment.Left
+    local wrap = card(parent, 56, order)
 
-	local valLbl = Instance.new("TextLabel", wrap)
-	valLbl.Position = UDim2.new(1, -54, 0, 8)
-	valLbl.Size = UDim2.new(0, 44, 0, 18)
-	valLbl.BackgroundTransparency = 1
-	valLbl.Text = tostring(defaultV)
-	valLbl.Font = Enum.Font.GothamBold
-	valLbl.TextSize = 13
-	valLbl.TextColor3 = C.accentGlow
-	valLbl.TextXAlignment = Enum.TextXAlignment.Right
+    local lbl = Instance.new("TextLabel", wrap)
+    lbl.Position = UDim2.new(0, 12, 0, 8)
+    lbl.Size = UDim2.new(1, -80, 0, 18)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = labelText
+    lbl.Font = Enum.Font.GothamSemibold
+    lbl.TextSize = 12
+    lbl.TextColor3 = C.textMid
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
 
-	local track = Instance.new("Frame", wrap)
-	track.Position = UDim2.new(0, 12, 0, 36)
-	track.Size = UDim2.new(1, -24, 0, 4)
-	track.BackgroundColor3 = C.border
-	track.BorderSizePixel = 0
-	Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
+    local valLbl = Instance.new("TextLabel", wrap)
+    valLbl.Position = UDim2.new(1, -54, 0, 8)
+    valLbl.Size = UDim2.new(0, 44, 0, 18)
+    valLbl.BackgroundTransparency = 1
+    valLbl.Text = tostring(defaultV)
+    valLbl.Font = Enum.Font.GothamBold
+    valLbl.TextSize = 13
+    valLbl.TextColor3 = C.accentGlow
+    valLbl.TextXAlignment = Enum.TextXAlignment.Right
 
-	local fill2 = Instance.new("Frame", track)
-	fill2.Size = UDim2.new((defaultV - minV)/(maxV - minV), 0, 1, 0)
-	fill2.BackgroundColor3 = C.accent
-	fill2.BorderSizePixel = 0
-	Instance.new("UICorner", fill2).CornerRadius = UDim.new(1, 0)
+    local track = Instance.new("Frame", wrap)
+    track.Position = UDim2.new(0, 12, 0, 36)
+    track.Size = UDim2.new(1, -24, 0, 6)
+    track.BackgroundColor3 = C.border
+    track.BorderSizePixel = 0
+    track.Active = true
+    Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
-	local knob2 = Instance.new("Frame", track)
-	local kp = (defaultV - minV)/(maxV - minV)
-	knob2.Size = UDim2.new(0, 14, 0, 14)
-	knob2.Position = UDim2.new(kp, -7, 0.5, -7)
-	knob2.BackgroundColor3 = Color3.new(1,1,1)
-	knob2.BorderSizePixel = 0
-	Instance.new("UICorner", knob2).CornerRadius = UDim.new(1, 0)
-	local ks = Instance.new("UIStroke", knob2)
-	ks.Color = C.accent
-	ks.Thickness = 2
+    local fill2 = Instance.new("Frame", track)
+    fill2.Size = UDim2.new((defaultV - minV)/(maxV - minV), 0, 1, 0)
+    fill2.BackgroundColor3 = C.accent
+    fill2.BorderSizePixel = 0
+    Instance.new("UICorner", fill2).CornerRadius = UDim.new(1, 0)
 
-	local dragging2 = false
-	local function update(x)
-		local pos = math.clamp((x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-		local val = math.floor(minV + pos * (maxV - minV))
-		knob2.Position = UDim2.new(pos, -7, 0.5, -7)
-		fill2.Size = UDim2.new(pos, 0, 1, 0)
-		valLbl.Text = tostring(val)
-		if callback then callback(val) end
-	end
+    local knob2 = Instance.new("Frame", track)
+    local kp = (defaultV - minV)/(maxV - minV)
+    knob2.Size = UDim2.new(0, 16, 0, 16)
+    knob2.Position = UDim2.new(kp, -8, 0.5, -8)
+    knob2.BackgroundColor3 = Color3.new(1,1,1)
+    knob2.BorderSizePixel = 0
+    Instance.new("UICorner", knob2).CornerRadius = UDim.new(1, 0)
 
-	track.InputBegan:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging2 = true
-			update(inp.Position.X)
-		end
-	end)
-	UIS.InputChanged:Connect(function(inp)
-		if dragging2 and inp.UserInputType == Enum.UserInputType.MouseMovement then
-			update(inp.Position.X)
-		end
-	end)
-	UIS.InputEnded:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging2 = false
-		end
-	end)
+    local ks = Instance.new("UIStroke", knob2)
+    ks.Color = C.accent
+    ks.Thickness = 2
 
-	return wrap, valLbl
+    local dragging = false
+
+    local function update(x)
+        local pos = math.clamp((x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+        local val = math.floor(minV + pos * (maxV - minV))
+
+        knob2.Position = UDim2.new(pos, -8, 0.5, -8)
+        fill2.Size = UDim2.new(pos, 0, 1, 0)
+        valLbl.Text = tostring(val)
+
+        if callback then
+            callback(val)
+        end
+    end
+
+    track.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            update(input.Position.X)
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if dragging and (
+            input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch
+        ) then
+            update(input.Position.X)
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    return wrap, valLbl
 end
 
 local function makeStatusRow(parent, icon, label, order)
