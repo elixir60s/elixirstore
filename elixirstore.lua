@@ -1,4 +1,4 @@
--- ELIXIR 3.5 -- NEW GUI: MODERN DARK PURPLE + ICON SIDEBAR + NOTIF POPUP
+-- ELIXIR 3.5 -- REDESIGNED: DEEP PURPLE THEME + TEXT SIDEBAR
 local Players = game:GetService("Players")
 local player = game.Players.LocalPlayer
 local vim = game:GetService("VirtualInputManager")
@@ -96,31 +96,33 @@ gui.ResetOnSpawn = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- ============================================================
--- COLOR PALETTE
+-- COLOR PALETTE (redesigned - deep purple, not AI-looking)
 -- ============================================================
 local C = {
-	bg       = Color3.fromRGB(10, 10, 16),
-	surface  = Color3.fromRGB(16, 16, 26),
-	panel    = Color3.fromRGB(20, 20, 32),
-	card     = Color3.fromRGB(26, 26, 40),
-	sidebar  = Color3.fromRGB(13, 13, 22),
-	accent   = Color3.fromRGB(148, 75, 255),
-	accentDim= Color3.fromRGB(90, 45, 160),
-	accentGlow=Color3.fromRGB(180, 110, 255),
-	text     = Color3.fromRGB(230, 225, 255),
-	textMid  = Color3.fromRGB(160, 155, 190),
-	textDim  = Color3.fromRGB(90, 85, 115),
-	green    = Color3.fromRGB(60, 210, 120),
-	red      = Color3.fromRGB(230, 70, 80),
-	border   = Color3.fromRGB(40, 35, 65),
+	bg        = Color3.fromRGB(8,  7,  14),
+	surface   = Color3.fromRGB(14, 12, 24),
+	panel     = Color3.fromRGB(18, 16, 30),
+	card      = Color3.fromRGB(24, 21, 40),
+	sidebar   = Color3.fromRGB(11,  9, 20),
+	accent    = Color3.fromRGB(130, 60, 240),
+	accentDim = Color3.fromRGB(75,  35, 140),
+	accentGlow= Color3.fromRGB(175, 120, 255),
+	accentSoft= Color3.fromRGB(100, 55, 190),
+	text      = Color3.fromRGB(220, 215, 245),
+	textMid   = Color3.fromRGB(145, 138, 175),
+	textDim   = Color3.fromRGB(75,  68, 100),
+	green     = Color3.fromRGB(55,  200, 110),
+	red       = Color3.fromRGB(220, 60,  75),
+	border    = Color3.fromRGB(38,  32,  62),
+	borderAct = Color3.fromRGB(100, 55, 190),
 }
 
 -- ============================================================
 -- NOTIFICATION SYSTEM
 -- ============================================================
 local notifContainer = Instance.new("Frame", gui)
-notifContainer.Size = UDim2.new(0, 280, 1, 0)
-notifContainer.Position = UDim2.new(1, -290, 0, 0)
+notifContainer.Size = UDim2.new(0, 270, 1, 0)
+notifContainer.Position = UDim2.new(1, -280, 0, 0)
 notifContainer.BackgroundTransparency = 1
 notifContainer.ZIndex = 100
 
@@ -130,7 +132,7 @@ notifLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 notifLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local notifPadding = Instance.new("UIPadding", notifContainer)
-notifPadding.PaddingBottom = UDim.new(0, 12)
+notifPadding.PaddingBottom = UDim.new(0, 14)
 notifPadding.PaddingRight = UDim.new(0, 8)
 
 local notifCount = 0
@@ -139,40 +141,29 @@ local function notify(title, msg, ntype)
 	local color = ntype == "success" and C.green or ntype == "error" and C.red or C.accent
 
 	local card = Instance.new("Frame", notifContainer)
-	card.Size = UDim2.new(1, 0, 0, 62)
+	card.Size = UDim2.new(1, 0, 0, 58)
 	card.BackgroundColor3 = C.card
 	card.BorderSizePixel = 0
 	card.ClipsDescendants = true
 	card.ZIndex = 100
 	card.LayoutOrder = notifCount
 
-	local corner = Instance.new("UICorner", card)
-	corner.CornerRadius = UDim.new(0, 10)
+	Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
 
 	local stroke = Instance.new("UIStroke", card)
 	stroke.Color = color
-	stroke.Thickness = 1.2
-	stroke.Transparency = 0.4
+	stroke.Thickness = 1
+	stroke.Transparency = 0.5
 
-	local accent_bar = Instance.new("Frame", card)
-	accent_bar.Size = UDim2.new(0, 3, 1, 0)
-	accent_bar.BackgroundColor3 = color
-	accent_bar.BorderSizePixel = 0
-	accent_bar.ZIndex = 101
-
-	local icon = Instance.new("TextLabel", card)
-	icon.Position = UDim2.new(0, 12, 0, 10)
-	icon.Size = UDim2.new(0, 22, 0, 22)
-	icon.BackgroundTransparency = 1
-	icon.Text = ntype == "success" and "✓" or ntype == "error" and "✕" or "◆"
-	icon.TextColor3 = color
-	icon.Font = Enum.Font.GothamBlack
-	icon.TextSize = 14
-	icon.ZIndex = 101
+	local bar_left = Instance.new("Frame", card)
+	bar_left.Size = UDim2.new(0, 3, 1, 0)
+	bar_left.BackgroundColor3 = color
+	bar_left.BorderSizePixel = 0
+	bar_left.ZIndex = 101
 
 	local t = Instance.new("TextLabel", card)
-	t.Position = UDim2.new(0, 42, 0, 8)
-	t.Size = UDim2.new(1, -50, 0, 20)
+	t.Position = UDim2.new(0, 14, 0, 7)
+	t.Size = UDim2.new(1, -22, 0, 18)
 	t.BackgroundTransparency = 1
 	t.Text = title
 	t.Font = Enum.Font.GothamBold
@@ -182,32 +173,31 @@ local function notify(title, msg, ntype)
 	t.ZIndex = 101
 
 	local m = Instance.new("TextLabel", card)
-	m.Position = UDim2.new(0, 42, 0, 28)
-	m.Size = UDim2.new(1, -50, 0, 28)
+	m.Position = UDim2.new(0, 14, 0, 26)
+	m.Size = UDim2.new(1, -22, 0, 26)
 	m.BackgroundTransparency = 1
 	m.Text = msg
 	m.Font = Enum.Font.Gotham
-	m.TextSize = 12
+	m.TextSize = 11
 	m.TextColor3 = C.textMid
 	m.TextXAlignment = Enum.TextXAlignment.Left
 	m.TextWrapped = true
 	m.ZIndex = 101
 
-	local bar = Instance.new("Frame", card)
-	bar.Position = UDim2.new(0, 3, 1, -3)
-	bar.Size = UDim2.new(1, -3, 0, 3)
-	bar.BackgroundColor3 = color
-	bar.BorderSizePixel = 0
-	bar.ZIndex = 101
-	Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 2)
+	local timerBar = Instance.new("Frame", card)
+	timerBar.Position = UDim2.new(0, 3, 1, -2)
+	timerBar.Size = UDim2.new(1, -3, 0, 2)
+	timerBar.BackgroundColor3 = color
+	timerBar.BorderSizePixel = 0
+	timerBar.ZIndex = 101
 
-	card.Position = UDim2.new(1, 20, 0, 0)
-	TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {Position = UDim2.new(0,0,0,0)}):Play()
-	TweenService:Create(bar, TweenInfo.new(3.5, Enum.EasingStyle.Linear), {Size = UDim2.new(0,3,0,3)}):Play()
+	card.Position = UDim2.new(1, 16, 0, 0)
+	TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Position = UDim2.new(0,0,0,0)}):Play()
+	TweenService:Create(timerBar, TweenInfo.new(3.5, Enum.EasingStyle.Linear), {Size = UDim2.new(0,3,0,2)}):Play()
 
 	task.delay(3.5, function()
-		TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Position = UDim2.new(1,20,0,0)}):Play()
-		task.wait(0.35)
+		TweenService:Create(card, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {Position = UDim2.new(1,16,0,0)}):Play()
+		task.wait(0.3)
 		card:Destroy()
 	end)
 end
@@ -216,90 +206,94 @@ end
 -- MAIN WINDOW
 -- ============================================================
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 680, 0, 440)
-main.Position = UDim2.new(0.5, -340, 0.5, -220)
+main.Size = UDim2.new(0, 660, 0, 430)
+main.Position = UDim2.new(0.5, -330, 0.5, -215)
 main.BackgroundColor3 = C.bg
 main.Active = true
 main.Draggable = true
 main.ClipsDescendants = false
 
-local mainCorner = Instance.new("UICorner", main)
-mainCorner.CornerRadius = UDim.new(0, 14)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
 
 local mainStroke = Instance.new("UIStroke", main)
 mainStroke.Color = C.border
 mainStroke.Thickness = 1
 
+-- subtle inner glow top
+local topGlow = Instance.new("Frame", main)
+topGlow.Size = UDim2.new(1, 0, 0, 1)
+topGlow.BackgroundColor3 = C.accentSoft
+topGlow.BorderSizePixel = 0
+topGlow.ZIndex = 5
+topGlow.BackgroundTransparency = 0.3
+
 -- ============================================================
 -- TOP BAR
 -- ============================================================
 local topBar = Instance.new("Frame", main)
-topBar.Size = UDim2.new(1, 0, 0, 48)
+topBar.Size = UDim2.new(1, 0, 0, 46)
 topBar.BackgroundColor3 = C.surface
 topBar.ZIndex = 2
-Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 14)
+Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 12)
 
--- fix bottom corners of topbar
 local topBarFix = Instance.new("Frame", topBar)
-topBarFix.Size = UDim2.new(1, 0, 0, 14)
-topBarFix.Position = UDim2.new(0, 0, 1, -14)
+topBarFix.Size = UDim2.new(1, 0, 0, 12)
+topBarFix.Position = UDim2.new(0, 0, 1, -12)
 topBarFix.BackgroundColor3 = C.surface
 topBarFix.BorderSizePixel = 0
 
--- accent dot
-local dot = Instance.new("Frame", topBar)
-dot.Size = UDim2.new(0, 8, 0, 8)
-dot.Position = UDim2.new(0, 18, 0.5, -4)
-dot.BackgroundColor3 = C.accent
-dot.BorderSizePixel = 0
-Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+-- accent line under topbar
+local topAccentLine = Instance.new("Frame", topBar)
+topAccentLine.Size = UDim2.new(1, 0, 0, 1)
+topAccentLine.Position = UDim2.new(0, 0, 1, -1)
+topAccentLine.BackgroundColor3 = C.border
+topAccentLine.BorderSizePixel = 0
+
+-- small accent square
+local accentSquare = Instance.new("Frame", topBar)
+accentSquare.Size = UDim2.new(0, 4, 0, 20)
+accentSquare.Position = UDim2.new(0, 16, 0.5, -10)
+accentSquare.BackgroundColor3 = C.accent
+accentSquare.BorderSizePixel = 0
+Instance.new("UICorner", accentSquare).CornerRadius = UDim.new(0, 2)
 
 local titleLbl = Instance.new("TextLabel", topBar)
-titleLbl.Position = UDim2.new(0, 34, 0, 0)
-titleLbl.Size = UDim2.new(0, 200, 1, 0)
+titleLbl.Position = UDim2.new(0, 28, 0, 0)
+titleLbl.Size = UDim2.new(0, 160, 1, 0)
 titleLbl.BackgroundTransparency = 1
-titleLbl.Text = "ELIXIR  3.5"
+titleLbl.Text = "ELIXIR 3.5"
 titleLbl.Font = Enum.Font.GothamBlack
-titleLbl.TextSize = 16
+titleLbl.TextSize = 15
 titleLbl.TextColor3 = C.text
 titleLbl.TextXAlignment = Enum.TextXAlignment.Left
 
-local subLbl = Instance.new("TextLabel", topBar)
-subLbl.Position = UDim2.new(0, 34, 0, 26)
-subLbl.Size = UDim2.new(0, 200, 0, 16)
-subLbl.BackgroundTransparency = 1
-subLbl.Text = "MARSHMALLOW FARM"
-subLbl.Font = Enum.Font.Gotham
-subLbl.TextSize = 10
-subLbl.TextColor3 = C.textDim
-subLbl.TextXAlignment = Enum.TextXAlignment.Left
-
 -- version badge
 local badge = Instance.new("Frame", topBar)
-badge.Size = UDim2.new(0, 42, 0, 20)
-badge.Position = UDim2.new(0, 220, 0.5, -10)
+badge.Size = UDim2.new(0, 38, 0, 18)
+badge.Position = UDim2.new(0, 190, 0.5, -9)
 badge.BackgroundColor3 = C.accentDim
 badge.BorderSizePixel = 0
 Instance.new("UICorner", badge).CornerRadius = UDim.new(0, 4)
+
 local badgeTxt = Instance.new("TextLabel", badge)
 badgeTxt.Size = UDim2.new(1,0,1,0)
 badgeTxt.BackgroundTransparency = 1
 badgeTxt.Text = "v3.5"
 badgeTxt.Font = Enum.Font.GothamBold
-badgeTxt.TextSize = 11
+badgeTxt.TextSize = 10
 badgeTxt.TextColor3 = C.accentGlow
 
 -- close button
 local closeBtn = Instance.new("TextButton", topBar)
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -40, 0.5, -15)
-closeBtn.BackgroundColor3 = Color3.fromRGB(60, 20, 30)
-closeBtn.Text = "✕"
+closeBtn.Size = UDim2.new(0, 28, 0, 28)
+closeBtn.Position = UDim2.new(1, -38, 0.5, -14)
+closeBtn.BackgroundColor3 = Color3.fromRGB(50, 15, 22)
+closeBtn.Text = "x"
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 13
+closeBtn.TextSize = 12
 closeBtn.TextColor3 = C.red
 closeBtn.BorderSizePixel = 0
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 
 closeBtn.MouseButton1Click:Connect(function()
 	running = false
@@ -311,60 +305,57 @@ end)
 
 -- minimize button
 local minBtn = Instance.new("TextButton", topBar)
-minBtn.Size = UDim2.new(0, 30, 0, 30)
-minBtn.Position = UDim2.new(1, -76, 0.5, -15)
-minBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-minBtn.Text = "—"
+minBtn.Size = UDim2.new(0, 28, 0, 28)
+minBtn.Position = UDim2.new(1, -72, 0.5, -14)
+minBtn.BackgroundColor3 = C.card
+minBtn.Text = "-"
 minBtn.Font = Enum.Font.GothamBold
-minBtn.TextSize = 13
+minBtn.TextSize = 14
 minBtn.TextColor3 = C.textMid
 minBtn.BorderSizePixel = 0
-Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 6)
 
 -- ============================================================
--- ICON SIDEBAR
+-- TEXT SIDEBAR
 -- ============================================================
 local sidebar = Instance.new("Frame", main)
-sidebar.Size = UDim2.new(0, 56, 1, -48)
-sidebar.Position = UDim2.new(0, 0, 0, 48)
+sidebar.Size = UDim2.new(0, 80, 1, -46)
+sidebar.Position = UDim2.new(0, 0, 0, 46)
 sidebar.BackgroundColor3 = C.sidebar
 sidebar.ZIndex = 2
-Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 0)
+sidebar.ClipsDescendants = false
 
--- fix top-right corner
-local sidebarTopFix = Instance.new("Frame", sidebar)
-sidebarTopFix.Size = UDim2.new(1, 0, 0, 14)
-sidebarTopFix.BackgroundColor3 = C.sidebar
-sidebarTopFix.BorderSizePixel = 0
+-- right border line (parented to main so it doesn't join the layout)
+local sidebarLine = Instance.new("Frame", main)
+sidebarLine.Size = UDim2.new(0, 1, 1, -46)
+sidebarLine.Position = UDim2.new(0, 79, 0, 46)
+sidebarLine.BackgroundColor3 = C.border
+sidebarLine.BorderSizePixel = 0
+sidebarLine.ZIndex = 3
 
 local sidebarLayout = Instance.new("UIListLayout", sidebar)
 sidebarLayout.Padding = UDim.new(0, 4)
 sidebarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+sidebarLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 sidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local sidebarPad = Instance.new("UIPadding", sidebar)
-sidebarPad.PaddingTop = UDim.new(0, 18)
+sidebarPad.PaddingTop = UDim.new(0, 10)
 
--- bottom-left corner rounding fix
-local blCorner = Instance.new("Frame", main)
-blCorner.Size = UDim2.new(0, 56, 0, 14)
-blCorner.Position = UDim2.new(0, 0, 1, -14)
-blCorner.BackgroundColor3 = C.sidebar
-blCorner.BorderSizePixel = 0
+
 
 -- ============================================================
 -- CONTENT AREA
 -- ============================================================
 local content = Instance.new("Frame", main)
-content.Size = UDim2.new(1, -56, 1, -48)
-content.Position = UDim2.new(0, 56, 0, 48)
+content.Size = UDim2.new(1, -80, 1, -46)
+content.Position = UDim2.new(0, 80, 0, 46)
 content.BackgroundColor3 = C.panel
 content.ClipsDescendants = true
 Instance.new("UICorner", content).CornerRadius = UDim.new(0, 0)
 
--- fix top-left inner corner
 local contentFix = Instance.new("Frame", content)
-contentFix.Size = UDim2.new(0, 14, 1, 0)
+contentFix.Size = UDim2.new(0, 12, 1, 0)
 contentFix.BackgroundColor3 = C.panel
 contentFix.BorderSizePixel = 0
 
@@ -376,12 +367,12 @@ local tabBtns = {}
 local currentTab = nil
 
 local tabDefs = {
-	{icon = "⚡", name = "FARM",      order = 1},
-	{icon = "🤖", name = "AUTO",      order = 2},
-	{icon = "📊", name = "STATUS",    order = 3},
-	{icon = "📍", name = "TP",        order = 4},
-	{icon = "👁", name = "ESP",       order = 5},
-	{icon = "🔄", name = "RESPAWN",   order = 6},
+	{label = "FARM",    order = 1},
+	{label = "AUTO",    order = 2},
+	{label = "STATUS",  order = 3},
+	{label = "TP",      order = 4},
+	{label = "ESP",     order = 5},
+	{label = "RESPAWN", order = 6},
 }
 
 local function switchTab(name)
@@ -391,9 +382,9 @@ local function switchTab(name)
 	for n, b in pairs(tabBtns) do
 		if n == name then
 			b.BackgroundColor3 = C.accentDim
+			b.BackgroundTransparency = 0
 			b.TextColor3 = C.accentGlow
 		else
-			b.BackgroundColor3 = Color3.fromRGB(0,0,0)
 			b.BackgroundTransparency = 1
 			b.TextColor3 = C.textDim
 		end
@@ -403,56 +394,53 @@ end
 
 for i, def in ipairs(tabDefs) do
 	local btn = Instance.new("TextButton", sidebar)
-	btn.Size = UDim2.new(0, 42, 0, 42)
+	btn.Size = UDim2.new(0, 68, 0, 36)
 	btn.BackgroundTransparency = 1
-	btn.Text = def.icon
+	btn.Text = def.label
 	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 18
+	btn.TextSize = 11
 	btn.TextColor3 = C.textDim
 	btn.BorderSizePixel = 0
 	btn.LayoutOrder = def.order
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
 
-	-- tooltip label
-	local tip = Instance.new("TextLabel", btn)
-	tip.Size = UDim2.new(0, 70, 0, 22)
-	tip.Position = UDim2.new(1, 4, 0.5, -11)
-	tip.BackgroundColor3 = C.card
-	tip.BorderSizePixel = 0
-	tip.Text = def.name
-	tip.Font = Enum.Font.GothamBold
-	tip.TextSize = 11
-	tip.TextColor3 = C.text
-	tip.Visible = false
-	tip.ZIndex = 200
-	Instance.new("UICorner", tip).CornerRadius = UDim.new(0, 6)
-
-	btn.MouseEnter:Connect(function() tip.Visible = true end)
-	btn.MouseLeave:Connect(function() tip.Visible = false end)
+	-- active indicator line on left
+	local indicator = Instance.new("Frame", btn)
+	indicator.Size = UDim2.new(0, 2, 0, 18)
+	indicator.Position = UDim2.new(0, 0, 0.5, -9)
+	indicator.BackgroundColor3 = C.accent
+	indicator.BorderSizePixel = 0
+	indicator.Visible = false
+	Instance.new("UICorner", indicator).CornerRadius = UDim.new(0, 2)
 
 	local page = Instance.new("ScrollingFrame", content)
 	page.Size = UDim2.new(1, 0, 1, 0)
 	page.BackgroundTransparency = 1
 	page.ScrollBarThickness = 3
-	page.ScrollBarImageColor3 = C.accent
+	page.ScrollBarImageColor3 = C.accentSoft
 	page.Visible = false
 	page.BorderSizePixel = 0
 
 	local layout = Instance.new("UIListLayout", page)
-	layout.Padding = UDim.new(0, 8)
+	layout.Padding = UDim.new(0, 7)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 
 	local pad = Instance.new("UIPadding", page)
-	pad.PaddingTop = UDim.new(0, 16)
-	pad.PaddingLeft = UDim.new(0, 14)
-	pad.PaddingRight = UDim.new(0, 14)
-	pad.PaddingBottom = UDim.new(0, 16)
+	pad.PaddingTop = UDim.new(0, 14)
+	pad.PaddingLeft = UDim.new(0, 12)
+	pad.PaddingRight = UDim.new(0, 12)
+	pad.PaddingBottom = UDim.new(0, 14)
 
-	pages[def.name] = page
-	tabBtns[def.name] = btn
+	pages[def.label] = page
+	tabBtns[def.label] = btn
 
 	btn.MouseButton1Click:Connect(function()
-		switchTab(def.name)
+		switchTab(def.label)
+		-- toggle indicators
+		for _, b2 in pairs(tabBtns) do
+			local ind = b2:FindFirstChild("Frame")
+			if ind then ind.Visible = (b2 == btn) end
+		end
 	end)
 end
 
@@ -460,26 +448,37 @@ end
 -- UI COMPONENT BUILDERS
 -- ============================================================
 local function sectionLabel(parent, text, order)
-	local lbl = Instance.new("TextLabel", parent)
-	lbl.Size = UDim2.new(1, 0, 0, 18)
+	local wrap = Instance.new("Frame", parent)
+	wrap.Size = UDim2.new(1, 0, 0, 22)
+	wrap.BackgroundTransparency = 1
+	wrap.LayoutOrder = order or 0
+
+	local lbl = Instance.new("TextLabel", wrap)
+	lbl.Size = UDim2.new(1, 0, 1, 0)
 	lbl.BackgroundTransparency = 1
 	lbl.Text = text:upper()
 	lbl.Font = Enum.Font.GothamBold
-	lbl.TextSize = 10
+	lbl.TextSize = 9
 	lbl.TextColor3 = C.textDim
 	lbl.TextXAlignment = Enum.TextXAlignment.Left
 	lbl.LayoutOrder = order or 0
-	return lbl
+
+	local line = Instance.new("Frame", wrap)
+	line.Size = UDim2.new(1, 0, 0, 1)
+	line.Position = UDim2.new(0, 0, 1, -1)
+	line.BackgroundColor3 = C.border
+	line.BorderSizePixel = 0
+
+	return wrap
 end
 
 local function card(parent, h, order)
 	local f = Instance.new("Frame", parent)
-	f.Size = UDim2.new(1, 0, 0, h or 48)
+	f.Size = UDim2.new(1, 0, 0, h or 46)
 	f.BackgroundColor3 = C.card
 	f.BorderSizePixel = 0
 	f.LayoutOrder = order or 0
-	local c = Instance.new("UICorner", f)
-	c.CornerRadius = UDim.new(0, 10)
+	Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
 	local s = Instance.new("UIStroke", f)
 	s.Color = C.border
 	s.Thickness = 1
@@ -491,23 +490,22 @@ local function makeToggleBtn(parent, text, order)
 	local btn = Instance.new("TextButton", f)
 	btn.Size = UDim2.new(1, 0, 1, 0)
 	btn.BackgroundTransparency = 1
-	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 13
+	btn.Font = Enum.Font.GothamSemibold
+	btn.TextSize = 12
 	btn.TextColor3 = C.text
 	btn.Text = text
 	btn.BorderSizePixel = 0
 
-	-- pill indicator
 	local pill = Instance.new("Frame", f)
-	pill.Size = UDim2.new(0, 30, 0, 16)
-	pill.Position = UDim2.new(1, -42, 0.5, -8)
+	pill.Size = UDim2.new(0, 28, 0, 14)
+	pill.Position = UDim2.new(1, -40, 0.5, -7)
 	pill.BackgroundColor3 = C.textDim
 	pill.BorderSizePixel = 0
 	Instance.new("UICorner", pill).CornerRadius = UDim.new(1, 0)
 
 	local knob = Instance.new("Frame", pill)
-	knob.Size = UDim2.new(0, 12, 0, 12)
-	knob.Position = UDim2.new(0, 2, 0.5, -6)
+	knob.Size = UDim2.new(0, 10, 0, 10)
+	knob.Position = UDim2.new(0, 2, 0.5, -5)
 	knob.BackgroundColor3 = Color3.new(1,1,1)
 	knob.BorderSizePixel = 0
 	Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
@@ -516,12 +514,12 @@ local function makeToggleBtn(parent, text, order)
 	local function setToggle(on)
 		state = on
 		if on then
-			TweenService:Create(pill, TweenInfo.new(0.2), {BackgroundColor3 = C.accent}):Play()
-			TweenService:Create(knob, TweenInfo.new(0.2), {Position = UDim2.new(1, -14, 0.5, -6)}):Play()
+			TweenService:Create(pill, TweenInfo.new(0.18), {BackgroundColor3 = C.accent}):Play()
+			TweenService:Create(knob, TweenInfo.new(0.18), {Position = UDim2.new(1, -12, 0.5, -5)}):Play()
 			btn.TextColor3 = C.accentGlow
 		else
-			TweenService:Create(pill, TweenInfo.new(0.2), {BackgroundColor3 = C.textDim}):Play()
-			TweenService:Create(knob, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -6)}):Play()
+			TweenService:Create(pill, TweenInfo.new(0.18), {BackgroundColor3 = C.textDim}):Play()
+			TweenService:Create(knob, TweenInfo.new(0.18), {Position = UDim2.new(0, 2, 0.5, -5)}):Play()
 			btn.TextColor3 = C.text
 		end
 	end
@@ -535,146 +533,131 @@ end
 
 local function makeActionBtn(parent, text, color, order)
 	local f = Instance.new("TextButton", parent)
-	f.Size = UDim2.new(1, 0, 0, 38)
+	f.Size = UDim2.new(1, 0, 0, 36)
 	f.BackgroundColor3 = color or C.accentDim
 	f.Font = Enum.Font.GothamBold
-	f.TextSize = 13
+	f.TextSize = 12
 	f.TextColor3 = C.text
 	f.Text = text
 	f.BorderSizePixel = 0
 	f.LayoutOrder = order or 0
-	Instance.new("UICorner", f).CornerRadius = UDim.new(0, 10)
+	Instance.new("UICorner", f).CornerRadius = UDim.new(0, 8)
+
 	local s = Instance.new("UIStroke", f)
 	s.Color = C.border
 	s.Thickness = 1
 
 	f.MouseEnter:Connect(function()
-		TweenService:Create(f, TweenInfo.new(0.15), {BackgroundColor3 = C.accent}):Play()
+		TweenService:Create(f, TweenInfo.new(0.12), {BackgroundColor3 = C.accent}):Play()
 	end)
 	f.MouseLeave:Connect(function()
-		TweenService:Create(f, TweenInfo.new(0.15), {BackgroundColor3 = color or C.accentDim}):Play()
+		TweenService:Create(f, TweenInfo.new(0.12), {BackgroundColor3 = color or C.accentDim}):Play()
 	end)
 	return f
 end
 
 local function makeSlider(parent, labelText, minV, maxV, defaultV, order, callback)
-    local wrap = card(parent, 56, order)
+	local wrap = card(parent, 54, order)
 
-    local lbl = Instance.new("TextLabel", wrap)
-    lbl.Position = UDim2.new(0, 12, 0, 8)
-    lbl.Size = UDim2.new(1, -80, 0, 18)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = labelText
-    lbl.Font = Enum.Font.GothamSemibold
-    lbl.TextSize = 12
-    lbl.TextColor3 = C.textMid
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
+	local lbl = Instance.new("TextLabel", wrap)
+	lbl.Position = UDim2.new(0, 12, 0, 8)
+	lbl.Size = UDim2.new(1, -80, 0, 16)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = labelText
+	lbl.Font = Enum.Font.GothamSemibold
+	lbl.TextSize = 11
+	lbl.TextColor3 = C.textMid
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
 
-    local valLbl = Instance.new("TextLabel", wrap)
-    valLbl.Position = UDim2.new(1, -54, 0, 8)
-    valLbl.Size = UDim2.new(0, 44, 0, 18)
-    valLbl.BackgroundTransparency = 1
-    valLbl.Text = tostring(defaultV)
-    valLbl.Font = Enum.Font.GothamBold
-    valLbl.TextSize = 13
-    valLbl.TextColor3 = C.accentGlow
-    valLbl.TextXAlignment = Enum.TextXAlignment.Right
+	local valLbl = Instance.new("TextLabel", wrap)
+	valLbl.Position = UDim2.new(1, -52, 0, 8)
+	valLbl.Size = UDim2.new(0, 42, 0, 16)
+	valLbl.BackgroundTransparency = 1
+	valLbl.Text = tostring(defaultV)
+	valLbl.Font = Enum.Font.GothamBold
+	valLbl.TextSize = 12
+	valLbl.TextColor3 = C.accentGlow
+	valLbl.TextXAlignment = Enum.TextXAlignment.Right
 
-    local track = Instance.new("Frame", wrap)
-    track.Position = UDim2.new(0, 12, 0, 36)
-    track.Size = UDim2.new(1, -24, 0, 6)
-    track.BackgroundColor3 = C.border
-    track.BorderSizePixel = 0
-    track.Active = true
-    Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
+	local track = Instance.new("Frame", wrap)
+	track.Position = UDim2.new(0, 12, 0, 34)
+	track.Size = UDim2.new(1, -24, 0, 5)
+	track.BackgroundColor3 = C.border
+	track.BorderSizePixel = 0
+	track.Active = true
+	Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
-    local fill2 = Instance.new("Frame", track)
-    fill2.Size = UDim2.new((defaultV - minV)/(maxV - minV), 0, 1, 0)
-    fill2.BackgroundColor3 = C.accent
-    fill2.BorderSizePixel = 0
-    Instance.new("UICorner", fill2).CornerRadius = UDim.new(1, 0)
+	local fill2 = Instance.new("Frame", track)
+	fill2.Size = UDim2.new((defaultV - minV)/(maxV - minV), 0, 1, 0)
+	fill2.BackgroundColor3 = C.accent
+	fill2.BorderSizePixel = 0
+	Instance.new("UICorner", fill2).CornerRadius = UDim.new(1, 0)
 
-    local knob2 = Instance.new("Frame", track)
-    local kp = (defaultV - minV)/(maxV - minV)
-    knob2.Size = UDim2.new(0, 16, 0, 16)
-    knob2.Position = UDim2.new(kp, -8, 0.5, -8)
-    knob2.BackgroundColor3 = Color3.new(1,1,1)
-    knob2.BorderSizePixel = 0
-    Instance.new("UICorner", knob2).CornerRadius = UDim.new(1, 0)
+	local knob2 = Instance.new("Frame", track)
+	local kp = (defaultV - minV)/(maxV - minV)
+	knob2.Size = UDim2.new(0, 14, 0, 14)
+	knob2.Position = UDim2.new(kp, -7, 0.5, -7)
+	knob2.BackgroundColor3 = Color3.new(1,1,1)
+	knob2.BorderSizePixel = 0
+	Instance.new("UICorner", knob2).CornerRadius = UDim.new(1, 0)
 
-    local ks = Instance.new("UIStroke", knob2)
-    ks.Color = C.accent
-    ks.Thickness = 2
+	local ks = Instance.new("UIStroke", knob2)
+	ks.Color = C.accent
+	ks.Thickness = 2
 
-    local dragging = false
+	local dragging = false
 
-    local function update(x)
-        local pos = math.clamp((x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-        local val = math.floor(minV + pos * (maxV - minV))
+	local function update(x)
+		local pos = math.clamp((x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+		local val = math.floor(minV + pos * (maxV - minV))
+		knob2.Position = UDim2.new(pos, -7, 0.5, -7)
+		fill2.Size = UDim2.new(pos, 0, 1, 0)
+		valLbl.Text = tostring(val)
+		if callback then callback(val) end
+	end
 
-        knob2.Position = UDim2.new(pos, -8, 0.5, -8)
-        fill2.Size = UDim2.new(pos, 0, 1, 0)
-        valLbl.Text = tostring(val)
+	track.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			update(input.Position.X)
+		end
+	end)
 
-        if callback then
-            callback(val)
-        end
-    end
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			update(input.Position.X)
+		end
+	end)
 
-    track.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            update(input.Position.X)
-        end
-    end)
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
 
-    UIS.InputChanged:Connect(function(input)
-        if dragging and (
-            input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch
-        ) then
-            update(input.Position.X)
-        end
-    end)
-
-    UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-
-    return wrap, valLbl
+	return wrap, valLbl
 end
 
-local function makeStatusRow(parent, icon, label, order)
-	local f = card(parent, 32, order)
-	local ic = Instance.new("TextLabel", f)
-	ic.Position = UDim2.new(0, 10, 0.5, -9)
-	ic.Size = UDim2.new(0, 18, 0, 18)
-	ic.BackgroundTransparency = 1
-	ic.Text = icon
-	ic.TextSize = 14
-	ic.Font = Enum.Font.Gotham
+local function makeStatusRow(parent, label, order)
+	local f = card(parent, 30, order)
 
 	local lbl2 = Instance.new("TextLabel", f)
-	lbl2.Position = UDim2.new(0, 32, 0, 0)
-	lbl2.Size = UDim2.new(0.5, 0, 1, 0)
+	lbl2.Position = UDim2.new(0, 12, 0, 0)
+	lbl2.Size = UDim2.new(0.6, 0, 1, 0)
 	lbl2.BackgroundTransparency = 1
 	lbl2.Text = label
 	lbl2.Font = Enum.Font.GothamSemibold
-	lbl2.TextSize = 12
+	lbl2.TextSize = 11
 	lbl2.TextColor3 = C.textMid
 	lbl2.TextXAlignment = Enum.TextXAlignment.Left
 
 	local val2 = Instance.new("TextLabel", f)
-	val2.Position = UDim2.new(0.5, 0, 0, 0)
-	val2.Size = UDim2.new(0.5, -10, 1, 0)
+	val2.Position = UDim2.new(0.6, 0, 0, 0)
+	val2.Size = UDim2.new(0.4, -10, 1, 0)
 	val2.BackgroundTransparency = 1
 	val2.Text = "0"
 	val2.Font = Enum.Font.GothamBold
-	val2.TextSize = 13
+	val2.TextSize = 12
 	val2.TextColor3 = C.accentGlow
 	val2.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -688,50 +671,49 @@ local fp = pages["FARM"]
 
 sectionLabel(fp, "Status", 1)
 
-local statusCard = card(fp, 38, 2)
+local statusCard = card(fp, 36, 2)
 local statusLabel = Instance.new("TextLabel", statusCard)
 statusLabel.Size = UDim2.new(1, -20, 1, 0)
 statusLabel.Position = UDim2.new(0, 12, 0, 0)
 statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "⬤  IDLE"
+statusLabel.Text = "IDLE"
 statusLabel.Font = Enum.Font.GothamBold
-statusLabel.TextSize = 13
+statusLabel.TextSize = 12
 statusLabel.TextColor3 = C.textMid
 statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 
 sectionLabel(fp, "Inventory", 3)
 
-local waterVal, _  = makeStatusRow(fp, "💧", "Water",            4)
-local sugarVal, _  = makeStatusRow(fp, "🧊", "Sugar Block Bag",  5)
-local gelatinVal,_ = makeStatusRow(fp, "🧪", "Gelatin",          6)
-local bagVal, _    = makeStatusRow(fp, "📦", "Empty Bag",        7)
+local waterVal, _  = makeStatusRow(fp, "Water",            4)
+local sugarVal, _  = makeStatusRow(fp, "Sugar Block Bag",  5)
+local gelatinVal,_ = makeStatusRow(fp, "Gelatin",          6)
+local bagVal, _    = makeStatusRow(fp, "Empty Bag",        7)
 
 sectionLabel(fp, "Controls", 8)
 
-local _, _, setBuySlider
 local buySliderWrap, buyValLbl = makeSlider(fp, "BUY AMOUNT", 1, 25, 1, 9, function(v)
 	buyAmount = v
 end)
 
-local farmToggleBtn = makeActionBtn(fp, "▶  START FARM", C.accentDim, 10)
-local sellToggleBtn = makeActionBtn(fp, "💰  AUTO SELL : OFF", C.card, 11)
-local buyNowBtn     = makeActionBtn(fp, "🛒  BUY NOW", C.card, 12)
+local farmToggleBtn = makeActionBtn(fp, "START FARM", C.accentDim, 10)
+local sellToggleBtn = makeActionBtn(fp, "AUTO SELL : OFF", C.card, 11)
+local buyNowBtn     = makeActionBtn(fp, "BUY NOW", C.card, 12)
 
--- progress bars
 sectionLabel(fp, "Cook Progress", 13)
-local function makeProgressCard(icon, label, order)
-	local f = card(fp, 36, order)
+
+local function makeProgressCard(label, order)
+	local f = card(fp, 34, order)
 	local lbl3 = Instance.new("TextLabel", f)
-	lbl3.Position = UDim2.new(0, 10, 0, 6)
-	lbl3.Size = UDim2.new(0.5, 0, 0, 14)
+	lbl3.Position = UDim2.new(0, 10, 0, 5)
+	lbl3.Size = UDim2.new(0.6, 0, 0, 13)
 	lbl3.BackgroundTransparency = 1
-	lbl3.Text = icon .. "  " .. label
+	lbl3.Text = label
 	lbl3.Font = Enum.Font.GothamSemibold
-	lbl3.TextSize = 11
+	lbl3.TextSize = 10
 	lbl3.TextColor3 = C.textMid
 	lbl3.TextXAlignment = Enum.TextXAlignment.Left
 	local bg2 = Instance.new("Frame", f)
-	bg2.Position = UDim2.new(0, 10, 0, 24)
+	bg2.Position = UDim2.new(0, 10, 0, 22)
 	bg2.Size = UDim2.new(1, -20, 0, 5)
 	bg2.BackgroundColor3 = C.border
 	bg2.BorderSizePixel = 0
@@ -744,10 +726,10 @@ local function makeProgressCard(icon, label, order)
 	return bar2
 end
 
-local waterBar   = makeProgressCard("💧", "Water (20s)",   14)
-local sugarBar   = makeProgressCard("🧊", "Sugar (1s)",    15)
-local gelatinBar = makeProgressCard("🧪", "Gelatin (1s)",  16)
-local bagBar     = makeProgressCard("📦", "Bag (45s)",     17)
+local waterBar   = makeProgressCard("Water (20s)",   14)
+local sugarBar   = makeProgressCard("Sugar (1s)",    15)
+local gelatinBar = makeProgressCard("Gelatin (1s)",  16)
+local bagBar     = makeProgressCard("Bag (45s)",     17)
 
 -- ============================================================
 -- AUTO PAGE
@@ -757,7 +739,7 @@ local ap = pages["AUTO"]
 sectionLabel(ap, "Auto Farm", 1)
 
 local autoFarmToggle, autoFarmCard = makeToggleBtn(ap, "Auto Farm Loop", 2)
-autoFarmCard.Size = UDim2.new(1,0,0,44)
+autoFarmCard.Size = UDim2.new(1,0,0,42)
 
 local _, cookValLbl = makeSlider(ap, "COOK AMOUNT", 1, 50, 5, 3, function(v)
 	cookAmount = v
@@ -765,16 +747,16 @@ end)
 
 sectionLabel(ap, "Protection", 4)
 local antiHitToggle, antiHitCard = makeToggleBtn(ap, "Anti Hit + Anti Approach", 5)
-antiHitCard.Size = UDim2.new(1,0,0,44)
+antiHitCard.Size = UDim2.new(1,0,0,42)
 
-local antiStatusCard = card(ap, 32, 6)
+local antiStatusCard = card(ap, 30, 6)
 local antiStatusLbl = Instance.new("TextLabel", antiStatusCard)
 antiStatusLbl.Size = UDim2.new(1,-20,1,0)
 antiStatusLbl.Position = UDim2.new(0,12,0,0)
 antiStatusLbl.BackgroundTransparency = 1
-antiStatusLbl.Text = "🛡️  Idle"
+antiStatusLbl.Text = "Idle"
 antiStatusLbl.Font = Enum.Font.Gotham
-antiStatusLbl.TextSize = 12
+antiStatusLbl.TextSize = 11
 antiStatusLbl.TextColor3 = C.textMid
 antiStatusLbl.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -783,32 +765,31 @@ antiStatusLbl.TextXAlignment = Enum.TextXAlignment.Left
 -- ============================================================
 local sp = pages["STATUS"]
 
--- avatar card
-local avatarCard = card(sp, 72, 1)
+local avatarCard = card(sp, 70, 1)
 local avatarImg2 = Instance.new("ImageLabel", avatarCard)
-avatarImg2.Position = UDim2.new(0, 10, 0.5, -28)
-avatarImg2.Size = UDim2.new(0, 56, 0, 56)
+avatarImg2.Position = UDim2.new(0, 10, 0.5, -26)
+avatarImg2.Size = UDim2.new(0, 52, 0, 52)
 avatarImg2.BackgroundColor3 = C.border
 avatarImg2.BorderSizePixel = 0
-Instance.new("UICorner", avatarImg2).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", avatarImg2).CornerRadius = UDim.new(0, 8)
 
 local usernameLbl = Instance.new("TextLabel", avatarCard)
-usernameLbl.Position = UDim2.new(0, 76, 0, 14)
-usernameLbl.Size = UDim2.new(1, -86, 0, 22)
+usernameLbl.Position = UDim2.new(0, 72, 0, 14)
+usernameLbl.Size = UDim2.new(1, -82, 0, 20)
 usernameLbl.BackgroundTransparency = 1
 usernameLbl.Text = player.Name
 usernameLbl.Font = Enum.Font.GothamBlack
-usernameLbl.TextSize = 16
+usernameLbl.TextSize = 15
 usernameLbl.TextColor3 = C.text
 usernameLbl.TextXAlignment = Enum.TextXAlignment.Left
 
 local displayLbl = Instance.new("TextLabel", avatarCard)
-displayLbl.Position = UDim2.new(0, 76, 0, 38)
-displayLbl.Size = UDim2.new(1, -86, 0, 16)
+displayLbl.Position = UDim2.new(0, 72, 0, 36)
+displayLbl.Size = UDim2.new(1, -82, 0, 14)
 displayLbl.BackgroundTransparency = 1
 displayLbl.Text = "@" .. player.DisplayName
 displayLbl.Font = Enum.Font.Gotham
-displayLbl.TextSize = 12
+displayLbl.TextSize = 11
 displayLbl.TextColor3 = C.textDim
 displayLbl.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -818,33 +799,34 @@ task.spawn(function()
 end)
 
 sectionLabel(sp, "Inventory", 2)
-local statWaterVal   = makeStatusRow(sp, "💧", "Water",           3)
-local statSugarVal   = makeStatusRow(sp, "🧊", "Sugar Block Bag", 4)
-local statGelatinVal = makeStatusRow(sp, "🧪", "Gelatin",         5)
-local statBagVal     = makeStatusRow(sp, "📦", "Empty Bag",       6)
+local statWaterVal   = makeStatusRow(sp, "Water",           3)
+local statSugarVal   = makeStatusRow(sp, "Sugar Block Bag", 4)
+local statGelatinVal = makeStatusRow(sp, "Gelatin",         5)
+local statBagVal     = makeStatusRow(sp, "Empty Bag",       6)
 
 sectionLabel(sp, "Marshmallow Bags", 7)
-local statSmallVal  = makeStatusRow(sp, "🍬", "Small Bag",  8)
-local statMedVal    = makeStatusRow(sp, "🍬", "Medium Bag", 9)
-local statLargeVal  = makeStatusRow(sp, "🍬", "Large Bag",  10)
+local statSmallVal  = makeStatusRow(sp, "Small Bag",  8)
+local statMedVal    = makeStatusRow(sp, "Medium Bag", 9)
+local statLargeVal  = makeStatusRow(sp, "Large Bag",  10)
 
-local totalCard = card(sp, 38, 11)
+local totalCard = card(sp, 36, 11)
 local totalLblLeft = Instance.new("TextLabel", totalCard)
 totalLblLeft.Position = UDim2.new(0,12,0,0)
 totalLblLeft.Size = UDim2.new(0.5,0,1,0)
 totalLblLeft.BackgroundTransparency = 1
 totalLblLeft.Text = "Total Bags"
 totalLblLeft.Font = Enum.Font.GothamBold
-totalLblLeft.TextSize = 13
+totalLblLeft.TextSize = 12
 totalLblLeft.TextColor3 = C.text
 totalLblLeft.TextXAlignment = Enum.TextXAlignment.Left
+
 local totalVal = Instance.new("TextLabel", totalCard)
 totalVal.Position = UDim2.new(0.5,0,0,0)
 totalVal.Size = UDim2.new(0.5,-12,1,0)
 totalVal.BackgroundTransparency = 1
 totalVal.Text = "0"
 totalVal.Font = Enum.Font.GothamBlack
-totalVal.TextSize = 16
+totalVal.TextSize = 15
 totalVal.TextColor3 = C.accentGlow
 totalVal.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -874,20 +856,20 @@ local function tpBtn(label, cf, order)
 end
 
 sectionLabel(tp, "Quick", 1)
-tpBtn("🏪  NPC Store",  npcPos, 2)
-tpBtn("🏆  Tier",       tierPos, 3)
+tpBtn("NPC Store",  npcPos, 2)
+tpBtn("Tier",       tierPos, 3)
 sectionLabel(tp, "Apartments", 4)
-tpBtn("🏠  Apart 1", apart1, 5)
-tpBtn("🏠  Apart 2", apart2, 6)
-tpBtn("🏠  Apart 3", apart3, 7)
-tpBtn("🏠  Apart 4", apart4, 8)
-tpBtn("🏠  Apart 5", apart5, 9)
-tpBtn("🏠  Apart 6", apart6, 10)
+tpBtn("Apart 1", apart1, 5)
+tpBtn("Apart 2", apart2, 6)
+tpBtn("Apart 3", apart3, 7)
+tpBtn("Apart 4", apart4, 8)
+tpBtn("Apart 5", apart5, 9)
+tpBtn("Apart 6", apart6, 10)
 sectionLabel(tp, "CSN", 11)
-tpBtn("📍  CSN 1", csn1, 12)
-tpBtn("📍  CSN 2", csn2, 13)
-tpBtn("📍  CSN 3", csn3, 14)
-tpBtn("📍  CSN 4", csn4, 15)
+tpBtn("CSN 1", csn1, 12)
+tpBtn("CSN 2", csn2, 13)
+tpBtn("CSN 3", csn3, 14)
+tpBtn("CSN 4", csn4, 15)
 
 -- ============================================================
 -- ESP PAGE
@@ -903,18 +885,18 @@ local ShowDistance = true
 sectionLabel(ep, "ESP Settings", 1)
 
 local espToggle, espCard, setEsp = makeToggleBtn(ep, "ESP Enabled", 2)
-espCard.Size = UDim2.new(1,0,0,44)
+espCard.Size = UDim2.new(1,0,0,42)
 
 local nameToggle, nameCard, setName = makeToggleBtn(ep, "Show Names", 3)
-nameCard.Size = UDim2.new(1,0,0,44)
+nameCard.Size = UDim2.new(1,0,0,42)
 setName(true)
 
 local healthToggle, healthCard, setHealth = makeToggleBtn(ep, "Show Health Bar", 4)
-healthCard.Size = UDim2.new(1,0,0,44)
+healthCard.Size = UDim2.new(1,0,0,42)
 setHealth(true)
 
 local distToggle, distCard, setDist = makeToggleBtn(ep, "Show Distance", 5)
-distCard.Size = UDim2.new(1,0,0,44)
+distCard.Size = UDim2.new(1,0,0,42)
 setDist(true)
 
 makeSlider(ep, "MAX DISTANCE", 50, 8000, 500, 6, function(v)
@@ -937,14 +919,14 @@ local rp = pages["RESPAWN"]
 
 local selectedSpawn = nil
 
-local respStatusCard = card(rp, 38, 1)
+local respStatusCard = card(rp, 36, 1)
 local respStatusLbl = Instance.new("TextLabel", respStatusCard)
 respStatusLbl.Size = UDim2.new(1,-20,1,0)
 respStatusLbl.Position = UDim2.new(0,12,0,0)
 respStatusLbl.BackgroundTransparency = 1
-respStatusLbl.Text = "📍 Belum dipilih"
+respStatusLbl.Text = "Belum dipilih"
 respStatusLbl.Font = Enum.Font.GothamSemibold
-respStatusLbl.TextSize = 12
+respStatusLbl.TextSize = 11
 respStatusLbl.TextColor3 = C.textMid
 respStatusLbl.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -959,24 +941,24 @@ local function makeSpawnBtn2(name, pos, order)
 			TweenService:Create(sb, TweenInfo.new(0.15), {BackgroundColor3 = C.card}):Play()
 		end
 		TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = C.accentDim}):Play()
-		respStatusLbl.Text = "📍 " .. name:gsub("^[^ ]+ ", "")
+		respStatusLbl.Text = name
 		notify("Spawn", name .. " dipilih", "success")
 	end)
 	table.insert(spawnBtns, b)
 end
 
-makeSpawnBtn2("🚀  Dealer",     Vector3.new(511,3,601),         3)
-makeSpawnBtn2("🏥  RS 1",       Vector3.new(1140.8,10.1,451.8), 4)
-makeSpawnBtn2("🏥  RS 2",       Vector3.new(1141.2,10.1,423.2), 5)
-makeSpawnBtn2("🏠  Tier 1",     Vector3.new(985.9,10.1,247),    6)
-makeSpawnBtn2("🏠  Tier 2",     Vector3.new(989.3,11.0,228.3),  7)
-makeSpawnBtn2("🗑️  Trash 1",    Vector3.new(890.9,10.1,44.3),   8)
-makeSpawnBtn2("🗑️  Trash 2",    Vector3.new(920.4,10.1,46.3),   9)
-makeSpawnBtn2("🚗  Dealership", Vector3.new(733.5,4.6,431.9),   10)
-makeSpawnBtn2("🔫  GS Ujung",   Vector3.new(-467.1,4.8,353.5),  11)
-makeSpawnBtn2("🔫  GS Mid",     Vector3.new(218.7,3.7,-176.2),  12)
+makeSpawnBtn2("Dealer",     Vector3.new(511,3,601),         3)
+makeSpawnBtn2("RS 1",       Vector3.new(1140.8,10.1,451.8), 4)
+makeSpawnBtn2("RS 2",       Vector3.new(1141.2,10.1,423.2), 5)
+makeSpawnBtn2("Tier 1",     Vector3.new(985.9,10.1,247),    6)
+makeSpawnBtn2("Tier 2",     Vector3.new(989.3,11.0,228.3),  7)
+makeSpawnBtn2("Trash 1",    Vector3.new(890.9,10.1,44.3),   8)
+makeSpawnBtn2("Trash 2",    Vector3.new(920.4,10.1,46.3),   9)
+makeSpawnBtn2("Dealership", Vector3.new(733.5,4.6,431.9),   10)
+makeSpawnBtn2("GS Ujung",   Vector3.new(-467.1,4.8,353.5),  11)
+makeSpawnBtn2("GS Mid",     Vector3.new(218.7,3.7,-176.2),  12)
 
-local respawnBtn = makeActionBtn(rp, "🔄  RESPAWN SEKARANG", C.accent, 13)
+local respawnBtn = makeActionBtn(rp, "RESPAWN SEKARANG", C.accent, 13)
 
 -- LOADING OVERLAY
 local loadingGui = Instance.new("ScreenGui", player.PlayerGui)
@@ -985,7 +967,7 @@ loadingGui.ResetOnSpawn = false
 local loadBg = Instance.new("Frame", loadingGui)
 loadBg.Size = UDim2.new(1,0,1,0)
 loadBg.BackgroundColor3 = Color3.new(0,0,0)
-loadBg.BackgroundTransparency = 0.3
+loadBg.BackgroundTransparency = 0.35
 loadBg.Visible = false
 local loadLbl = Instance.new("TextLabel", loadBg)
 loadLbl.Size = UDim2.new(1,0,0,60)
@@ -1027,43 +1009,43 @@ respawnBtn.MouseButton1Click:Connect(function()
 	loadLbl.Text = "ELIXIR"
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true)
 	notify("Respawn", "Berhasil respawn!", "success")
-	respStatusLbl.Text = "✅ Respawn berhasil!"
+	respStatusLbl.Text = "Respawn berhasil!"
 end)
 
 -- ============================================================
--- FARM LOGIC (same as original, wired to new UI)
+-- FARM LOGIC
 -- ============================================================
 local function cook()
 	while running do
 		if equip("Water") then
-			statusLabel.Text = "⬤  Cooking Water..."
+			statusLabel.Text = "Cooking Water..."
 			statusLabel.TextColor3 = C.accentGlow
 			if waterBar then fill(waterBar, 20) end
 			holdE(.7)
 			task.wait(20)
 		end
 		if equip("Sugar Block Bag") then
-			statusLabel.Text = "⬤  Cooking Sugar..."
+			statusLabel.Text = "Cooking Sugar..."
 			if sugarBar then fill(sugarBar, 1) end
 			holdE(.7)
 			task.wait(1)
 		end
 		if equip("Gelatin") then
-			statusLabel.Text = "⬤  Cooking Gelatin..."
+			statusLabel.Text = "Cooking Gelatin..."
 			if gelatinBar then fill(gelatinBar, 1) end
 			holdE(.7)
 			task.wait(1)
 		end
-		statusLabel.Text = "⬤  Waiting..."
+		statusLabel.Text = "Waiting..."
 		if bagBar then fill(bagBar, 45) end
 		task.wait(45)
 		if equip("Empty Bag") then
-			statusLabel.Text = "⬤  Collecting..."
+			statusLabel.Text = "Collecting..."
 			holdE(.7)
 			task.wait(1)
 		end
 	end
-	statusLabel.Text = "⬤  IDLE"
+	statusLabel.Text = "IDLE"
 	statusLabel.TextColor3 = C.textMid
 end
 
@@ -1098,12 +1080,12 @@ farmToggleBtn.MouseButton1Click:Connect(function()
 	autoFarmStopping = true
 	running = not running
 	if running then
-		farmToggleBtn.Text = "⏹  STOP FARM"
+		farmToggleBtn.Text = "STOP FARM"
 		TweenService:Create(farmToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = C.red}):Play()
 		notify("Farm", "Auto farm dimulai!", "success")
 		task.spawn(cook)
 	else
-		farmToggleBtn.Text = "▶  START FARM"
+		farmToggleBtn.Text = "START FARM"
 		TweenService:Create(farmToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = C.accentDim}):Play()
 		notify("Farm", "Auto farm dihentikan.", "error")
 	end
@@ -1116,12 +1098,12 @@ end)
 sellToggleBtn.MouseButton1Click:Connect(function()
 	autoSellEnabled = not autoSellEnabled
 	if autoSellEnabled then
-		sellToggleBtn.Text = "💰  AUTO SELL : ON"
+		sellToggleBtn.Text = "AUTO SELL : ON"
 		TweenService:Create(sellToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = C.accentDim}):Play()
 		notify("Sell", "Auto sell aktif!", "success")
 		task.spawn(autoSell)
 	else
-		sellToggleBtn.Text = "💰  AUTO SELL : OFF"
+		sellToggleBtn.Text = "AUTO SELL : OFF"
 		TweenService:Create(sellToggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = C.card}):Play()
 	end
 end)
@@ -1298,7 +1280,7 @@ local function startAntiHit()
 	antiHitConn = hum.HealthChanged:Connect(function(newHealth)
 		if not getgenv().ANTI_HIT then return end
 		if newHealth < hum.MaxHealth and newHealth > 0 then
-			antiStatusLbl.Text = "⚡  Kena hit! TP..."
+			antiStatusLbl.Text = "Kena hit! TP..."
 			vehicleTeleport(CFrame.new(SAFE_POS))
 		end
 	end)
@@ -1317,21 +1299,21 @@ local function startAntiApproach()
 			if h then
 				local d = (hrp.Position - h.Position).Magnitude
 				if d <= APPROACH_RADIUS then
-					antiStatusLbl.Text = "⚠️  " .. plr.Name .. " mendekat!"
+					antiStatusLbl.Text = plr.Name .. " mendekat!"
 					vehicleTeleport(CFrame.new(MALL_POS))
 					task.wait(1)
 					return
 				end
 			end
 		end
-		antiStatusLbl.Text = "🛡️  Aktif | Radius: " .. APPROACH_RADIUS
+		antiStatusLbl.Text = "Aktif | Radius: " .. APPROACH_RADIUS
 	end)
 end
 
 local function stopAntiHit()
 	if antiHitConn then antiHitConn:Disconnect() antiHitConn = nil end
 	if antiApprConn then antiApprConn:Disconnect() antiApprConn = nil end
-	antiStatusLbl.Text = "🛡️  Idle"
+	antiStatusLbl.Text = "Idle"
 end
 
 player.CharacterAdded:Connect(function()
@@ -1388,19 +1370,15 @@ end)
 -- MINIMIZE BUTTON
 -- ============================================================
 local bodyVisible = true
-local bodyFrame = Instance.new("Frame", main)
-bodyFrame.Size = UDim2.new(1, 0, 1, -48)
-bodyFrame.Position = UDim2.new(0, 0, 0, 48)
-bodyFrame.BackgroundTransparency = 1
 
 minBtn.MouseButton1Click:Connect(function()
 	bodyVisible = not bodyVisible
 	sidebar.Visible = bodyVisible
 	content.Visible = bodyVisible
 	if bodyVisible then
-		TweenService:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 680, 0, 440)}):Play()
+		TweenService:Create(main, TweenInfo.new(0.22, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 660, 0, 430)}):Play()
 	else
-		TweenService:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 680, 0, 48)}):Play()
+		TweenService:Create(main, TweenInfo.new(0.22, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 660, 0, 46)}):Play()
 	end
 end)
 
@@ -1408,17 +1386,17 @@ end)
 -- HIDE BUTTON (MOBILE)
 -- ============================================================
 local hideBtn2 = Instance.new("TextButton", gui)
-hideBtn2.Size = UDim2.new(0, 44, 0, 44)
-hideBtn2.Position = UDim2.new(1, -54, 0.5, -22)
+hideBtn2.Size = UDim2.new(0, 42, 0, 42)
+hideBtn2.Position = UDim2.new(1, -52, 0.5, -21)
 hideBtn2.Text = "E"
 hideBtn2.Font = Enum.Font.GothamBlack
-hideBtn2.TextSize = 16
+hideBtn2.TextSize = 15
 hideBtn2.BackgroundColor3 = C.accent
 hideBtn2.TextColor3 = Color3.new(1,1,1)
 hideBtn2.Active = true
 hideBtn2.Draggable = true
 hideBtn2.BorderSizePixel = 0
-Instance.new("UICorner", hideBtn2).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", hideBtn2).CornerRadius = UDim.new(0, 10)
 
 hideBtn2.MouseButton1Click:Connect(function()
 	main.Visible = not main.Visible
@@ -1436,7 +1414,7 @@ end, false, Enum.KeyCode.P)
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local ESP_DATA = {}
-local PURPLE_ESP = Color3.fromRGB(148, 75, 255)
+local PURPLE_ESP = Color3.fromRGB(130, 60, 240)
 
 local function createESP(p)
 	local box = {}
