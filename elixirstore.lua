@@ -1286,12 +1286,23 @@ local function startAntiHit()
 	end)
 end
 
+local NPC_ZONE_POS = Vector3.new(510.7584, 3.5872, 600.3163) -- posisi NPC Store
+local NPC_ZONE_RADIUS = 35 -- radius zona aman NPC (studs), sesuaikan kalau perlu
+
 local function startAntiApproach()
 	antiApprConn = RunService.Heartbeat:Connect(function()
 		if not getgenv().ANTI_HIT then return end
 		local char = player.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
+
+		-- Cek apakah player sedang berada di zona NPC
+		local distToNPC = (hrp.Position - NPC_ZONE_POS).Magnitude
+		if distToNPC <= NPC_ZONE_RADIUS then
+			antiStatusLbl.Text = "Paused (di zona NPC)"
+			return -- skip anti approach, jangan teleport
+		end
+
 		for _, plr in pairs(Players:GetPlayers()) do
 			if plr == player then continue end
 			local c = plr.Character
