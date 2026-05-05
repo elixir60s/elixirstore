@@ -119,8 +119,6 @@ local C = {
 
 -- ============================================================
 -- SIMPLE LOADING OVERLAY
--- Hanya hitam + tulisan "ELIXIR STORE" yang keren
--- showLoading() / hideLoading() exposed ke luar
 -- ============================================================
 local showLoading, hideLoading
 do
@@ -134,7 +132,6 @@ do
 	pcall(function() loadGui.Parent = game:GetService("CoreGui") end)
 	if not loadGui.Parent then loadGui.Parent = playerGui end
 
-	-- Full-screen hitam
 	local bg = Instance.new("Frame", loadGui)
 	bg.Size = UDim2.new(1, 0, 1, 0)
 	bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -142,7 +139,6 @@ do
 	bg.BorderSizePixel = 0
 	bg.ZIndex = 10
 
-	-- Subtle purple center glow
 	local glow = Instance.new("Frame", bg)
 	glow.Size = UDim2.new(0, 400, 0, 180)
 	glow.Position = UDim2.new(0.5, -200, 0.5, -90)
@@ -152,7 +148,6 @@ do
 	glow.ZIndex = 11
 	Instance.new("UICorner", glow).CornerRadius = UDim.new(1, 0)
 
-	-- Tulisan utama "ELIXIR STORE"
 	local title = Instance.new("TextLabel", bg)
 	title.Size = UDim2.new(0, 500, 0, 56)
 	title.Position = UDim2.new(0.5, -250, 0.5, -50)
@@ -173,7 +168,6 @@ do
 		g.Rotation = 0
 	end
 
-	-- Garis aksen tipis di bawah judul
 	local line = Instance.new("Frame", bg)
 	line.Size = UDim2.new(0, 200, 0, 1)
 	line.Position = UDim2.new(0.5, -100, 0.5, 14)
@@ -183,7 +177,6 @@ do
 	line.ZIndex = 12
 	Instance.new("UICorner", line).CornerRadius = UDim.new(1, 0)
 
-	-- Tulisan kecil bawah "Teleporting..."
 	local subLbl = Instance.new("TextLabel", bg)
 	subLbl.Size = UDim2.new(0, 400, 0, 22)
 	subLbl.Position = UDim2.new(0.5, -200, 0.5, 24)
@@ -195,7 +188,6 @@ do
 	subLbl.TextXAlignment = Enum.TextXAlignment.Center
 	subLbl.ZIndex = 12
 
-	-- Versi kecil pojok bawah
 	local ver = Instance.new("TextLabel", bg)
 	ver.Size = UDim2.new(1, 0, 0, 18)
 	ver.Position = UDim2.new(0, 0, 1, -22)
@@ -207,7 +199,6 @@ do
 	ver.TextXAlignment = Enum.TextXAlignment.Center
 	ver.ZIndex = 12
 
-	-- Animasi dots pada subLbl
 	task.spawn(function()
 		local pats = {"Teleporting", "Teleporting.", "Teleporting..", "Teleporting..."}
 		local idx = 1
@@ -479,6 +470,7 @@ local tabDefs = {
 	{label = "ESP",      order = 5},
 	{label = "RESPAWN",  order = 6},
 	{label = "UNDERPOT", order = 7},
+	{label = "FLY",      order = 8}, -- TAB BARU
 }
 
 local function switchTab(name)
@@ -720,21 +712,34 @@ local function makeSlider(parent, labelText, minV, maxV, defaultV, order, callba
 		if callback then callback(val) end
 	end
 
+	-- Support mouse + touch (HP & PC)
 	track.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
 			update(input.Position.X)
 		end
 	end)
 
+	knob2.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+		end
+	end)
+
 	UIS.InputChanged:Connect(function(input)
-		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		if dragging and (
+			input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch
+		) then
 			update(input.Position.X)
 		end
 	end)
 
 	UIS.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = false
 		end
 	end)
@@ -1104,7 +1109,6 @@ end)
 -- ============================================================
 local up = pages["UNDERPOT"]
 
--- Variables
 local deletedStack = {}
 local originalPositions = {}
 local currentRoadOffset = 0
@@ -1121,7 +1125,6 @@ local ROAD_KEYWORDS = {
 	"jalan","trotoar","jalanan"
 }
 
--- Status card
 local upStatusCard = card(up, 36, 1)
 local upStatusLbl = Instance.new("TextLabel", upStatusCard)
 upStatusLbl.Size = UDim2.new(1,-20,1,0)
@@ -1144,18 +1147,11 @@ upUndoLbl.TextSize = 11
 upUndoLbl.TextColor3 = C.textDim
 upUndoLbl.TextXAlignment = Enum.TextXAlignment.Left
 
--- Section: Lower
 sectionLabel(up, "Lower Road (depth: 6)", 3)
-
 local lowerRoadBtn = makeActionBtn(up, "LOWER : OFF", Color3.fromRGB(60, 20, 140), 4)
-
--- Section: Delete Floor
 sectionLabel(up, "Delete Floor", 5)
-
 local deleteFloorBtn = makeActionBtn(up, "DELETE FLOOR DI BAWAH", Color3.fromRGB(120, 20, 50), 6)
 local undoFloorBtn   = makeActionBtn(up, "UNDO", C.card, 7)
-
--- Section: Prompt Scanner
 sectionLabel(up, "Prompt Scanner (radius: 50)", 8)
 
 local upPromptCountCard = card(up, 30, 9)
@@ -1172,9 +1168,6 @@ upPromptCountLbl.TextXAlignment = Enum.TextXAlignment.Left
 local findCookBtn    = makeActionBtn(up, "FIND COOK", Color3.fromRGB(0, 100, 80), 10)
 local restoreCookBtn = makeActionBtn(up, "RESTORE COOK", C.card, 11)
 
--- ============================================================
--- UNDERPOT LOGIC
--- ============================================================
 local function isRoadPart(part)
 	if not part:IsA("BasePart") and not part:IsA("UnionOperation") then return false end
 	local nameLower = part.Name:lower()
@@ -1275,7 +1268,6 @@ deleteFloorBtn.MouseButton1Click:Connect(function()
 	end
 
 	upStatusLbl.Text = "Mencari object di bawah..."
-
 	local rayOrigin = hrp.Position
 	local rayDir = Vector3.new(0, -15, 0)
 	local rayParams = RaycastParams.new()
@@ -1303,7 +1295,6 @@ deleteFloorBtn.MouseButton1Click:Connect(function()
 	TweenService:Create(deleteFloorBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(120, 20, 50)}):Play()
 end)
 
--- Prompt Scanner Logic
 local function getPromptPosition(prompt)
 	local p = prompt.Parent
 	if not p then return nil end
@@ -1332,7 +1323,6 @@ local function doPromptScan()
 	local char = player.Character
 	local hrp = char and char:FindFirstChild("HumanoidRootPart")
 	if not hrp then upStatusLbl.Text = "HumanoidRootPart tidak ada" return end
-
 	for prompt, data in pairs(scannedPrompts) do
 		if prompt and prompt.Parent then
 			prompt.MaxActivationDistance = data.maxDist
@@ -1342,10 +1332,8 @@ local function doPromptScan()
 		end
 	end
 	scannedPrompts = {}
-
 	upStatusLbl.Text = "Scanning prompt..."
 	local found = 0
-
 	for _, v in ipairs(workspace:GetDescendants()) do
 		if v:IsA("ProximityPrompt") then
 			local pos = getPromptPosition(v)
@@ -1367,7 +1355,6 @@ local function doPromptScan()
 			end
 		end
 	end
-
 	upPromptCountLbl.Text = found .. " prompt ditemukan"
 	upStatusLbl.Text = "Scan: " .. found .. " prompt dimodifikasi"
 end
@@ -1403,6 +1390,109 @@ end)
 restoreCookBtn.MouseButton1Click:Connect(function()
 	doRestorePrompts()
 	notify("Prompt", "Prompt di-restore.", "info")
+end)
+
+-- ============================================================
+-- FLY VEHICLE PAGE (TAB BARU)
+-- ============================================================
+local flyPage = pages["FLY"]
+
+-- Variabel fly
+local flyEnabled  = false
+local flySpeed    = 1.0
+local defaultCharParent = nil
+
+local function GetVehicleFromDescendant(Descendant)
+	return
+		Descendant:FindFirstAncestor(player.Name .. "'s Car") or
+		(Descendant:FindFirstAncestor("Body") and Descendant:FindFirstAncestor("Body").Parent) or
+		(Descendant:FindFirstAncestor("Misc") and Descendant:FindFirstAncestor("Misc").Parent) or
+		Descendant:FindFirstAncestorWhichIsA("Model")
+end
+
+-- Section: Status fly
+sectionLabel(flyPage, "Status", 1)
+
+local flyStatusCard = card(flyPage, 36, 2)
+local flyStatusLbl = Instance.new("TextLabel", flyStatusCard)
+flyStatusLbl.Size = UDim2.new(1,-20,1,0)
+flyStatusLbl.Position = UDim2.new(0,12,0,0)
+flyStatusLbl.BackgroundTransparency = 1
+flyStatusLbl.Text = "IDLE — Tidak di kendaraan"
+flyStatusLbl.Font = Enum.Font.GothamBold
+flyStatusLbl.TextSize = 11
+flyStatusLbl.TextColor3 = C.textMid
+flyStatusLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Section: Toggle fly
+sectionLabel(flyPage, "Flight Control", 3)
+
+local flyToggle, flyToggleCard, setFlyToggle = makeToggleBtn(flyPage, "Fly Vehicle (Nembus)", 4)
+flyToggleCard.Size = UDim2.new(1,0,0,42)
+
+-- Section: Speed slider
+sectionLabel(flyPage, "Speed", 5)
+
+-- Slider speed: nilai 1-800, default 100 (= speed 1.0)
+makeSlider(flyPage, "FLIGHT SPEED", 1, 800, 100, 6, function(v)
+	flySpeed = v / 100
+end)
+
+-- Section: Info kontrol
+sectionLabel(flyPage, "Kontrol Keyboard", 7)
+
+local function makeInfoCard(text, order)
+	local f = card(flyPage, 28, order)
+	local lbl = Instance.new("TextLabel", f)
+	lbl.Size = UDim2.new(1,-20,1,0)
+	lbl.Position = UDim2.new(0,12,0,0)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = text
+	lbl.Font = Enum.Font.Gotham
+	lbl.TextSize = 11
+	lbl.TextColor3 = C.textMid
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	return f
+end
+
+makeInfoCard("W / S  →  Maju / Mundur", 8)
+makeInfoCard("A / D  →  Kiri / Kanan",  9)
+makeInfoCard("E  →  Naik  |  Q  →  Turun", 10)
+
+-- Section: Quick action
+sectionLabel(flyPage, "Quick Action", 11)
+
+local flyStopBtn = makeActionBtn(flyPage, "STOP & RESET POSISI", Color3.fromRGB(120, 20, 50), 12)
+flyStopBtn.MouseButton1Click:Connect(function()
+	flyEnabled = false
+	setFlyToggle(false)
+	local char = player.Character
+	if char then
+		char.Parent = defaultCharParent or Players
+	end
+	notify("Fly", "Flight dihentikan & reset.", "error")
+	flyStatusLbl.Text = "IDLE — Flight dimatikan"
+	flyStatusLbl.TextColor3 = C.textMid
+end)
+
+-- Toggle logic
+flyToggle.MouseButton1Click:Connect(function()
+	flyEnabled = not flyEnabled
+	setFlyToggle(flyEnabled)
+	if flyEnabled then
+		notify("Fly", "Vehicle fly aktif! Gunakan WASDQE", "success")
+		flyStatusLbl.Text = "AKTIF — Terbang!"
+		flyStatusLbl.TextColor3 = C.accentGlow
+	else
+		flyEnabled = false
+		local char = player.Character
+		if char then
+			char.Parent = defaultCharParent or Players
+		end
+		notify("Fly", "Vehicle fly dimatikan.", "error")
+		flyStatusLbl.Text = "IDLE — Flight dimatikan"
+		flyStatusLbl.TextColor3 = C.textMid
+	end
 end)
 
 -- ============================================================
@@ -1738,6 +1828,74 @@ antiHitToggle.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================================
+-- FLY LOGIC (RunService.Stepped)
+-- ============================================================
+RunService.Stepped:Connect(function()
+	local Character = player.Character
+	if flyEnabled then
+		if not (Character and typeof(Character) == "Instance") then return end
+		local Humanoid = Character:FindFirstChildWhichIsA("Humanoid")
+		if not (Humanoid and typeof(Humanoid) == "Instance") then return end
+		local SeatPart = Humanoid.SeatPart
+		if not (SeatPart and typeof(SeatPart) == "Instance" and SeatPart:IsA("VehicleSeat")) then
+			flyStatusLbl.Text = "AKTIF — Belum naik kendaraan"
+			flyStatusLbl.TextColor3 = C.red
+			return
+		end
+		local Vehicle = GetVehicleFromDescendant(SeatPart)
+		if not (Vehicle and Vehicle:IsA("Model")) then return end
+
+		-- Simpan parent karakter
+		if not defaultCharParent then
+			defaultCharParent = Character.Parent
+		end
+		Character.Parent = Vehicle
+
+		-- Set primary part kalau belum ada
+		if not Vehicle.PrimaryPart then
+			if SeatPart.Parent == Vehicle then
+				Vehicle.PrimaryPart = SeatPart
+			else
+				Vehicle.PrimaryPart = Vehicle:FindFirstChildWhichIsA("BasePart")
+			end
+		end
+
+		local camCF = workspace.CurrentCamera.CFrame
+		local pos = Vehicle:GetPrimaryPartCFrame()
+		local typing = UIS:GetFocusedTextBox()
+
+		local moveX, moveY, moveZ = 0, 0, 0
+		if not typing then
+			if UIS:IsKeyDown(Enum.KeyCode.D) then moveX = flySpeed end
+			if UIS:IsKeyDown(Enum.KeyCode.A) then moveX = -flySpeed end
+			if UIS:IsKeyDown(Enum.KeyCode.E) then moveY = flySpeed / 2 end
+			if UIS:IsKeyDown(Enum.KeyCode.Q) then moveY = -flySpeed / 2 end
+			if UIS:IsKeyDown(Enum.KeyCode.S) then moveZ = flySpeed end
+			if UIS:IsKeyDown(Enum.KeyCode.W) then moveZ = -flySpeed end
+		end
+
+		-- Teleport langsung = bypass collision (nembus)
+		Vehicle:SetPrimaryPartCFrame(
+			CFrame.new(pos.Position, pos.Position + camCF.LookVector) *
+			CFrame.new(moveX, moveY, moveZ)
+		)
+
+		-- Nol-kan velocity biar stabil di udara
+		SeatPart.AssemblyLinearVelocity  = Vector3.new(0, 0, 0)
+		SeatPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+
+		flyStatusLbl.Text = "AKTIF — Speed: " .. string.format("%.1f", flySpeed)
+		flyStatusLbl.TextColor3 = C.accentGlow
+	else
+		if Character and typeof(Character) == "Instance" then
+			if defaultCharParent then
+				Character.Parent = defaultCharParent
+			end
+		end
+	end
+end)
+
+-- ============================================================
 -- STATUS LOOP
 -- ============================================================
 task.spawn(function()
@@ -1803,7 +1961,6 @@ hideBtn2.MouseButton1Click:Connect(function()
 	main.Visible = not main.Visible
 end)
 
--- Keybind Z untuk hide/show GUI
 ContextActionService:BindAction("toggleUI_ELIXIR", function(_, state)
 	if state == Enum.UserInputState.Begin then
 		main.Visible = not main.Visible
